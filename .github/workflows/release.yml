@@ -1,0 +1,82 @@
+name: release
+
+# Triggered by a semver tag push (e.g. v0.1.0). Builds a self-contained
+# win-x64 publish of PiggyBank.App, wraps it with Velopack into setup.exe +
+# delta nupkgs, then attaches the whole Releases/ folder to a GitHub Release
+# at the tag.
+#
+# vpk is installed fresh per run as a global dotnet tool. That keeps the
+# workflow self-contained and avoids needing to pin a separate
+# velopack/vpk action.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  # softprops/action-gh-release needs contents:write to create the release
+  # and upload assets. No other scopes are required.
+  contents: write
+
+jobs:
+  release:
+    name: Build installer + publish GitHub Release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install vpk (Velopack CLI)
+        shell: pwsh
+        run: dotnet tool install -g vpk
+
+      - name: Restore
+        run: dotnet restore PiggyBank.slnx
+
+      - name: Publish PiggyBank.App (self-contained, win-x64)
+        run: >
+          dotnet publish src/PiggyBank.App/PiggyBank.App.csproj
+          -c Release
+          -r win-x64
+          --self-contained
+          -o publish/PiggyBank
+
+      - name: Compute version from tag
+        id: ver
+        shell: pwsh
+        run: |
+          # ${{ github.ref_name }} is e.g. "v0.1.0"; vpk wants "0.1.0".
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw "Empty version after stripping leading 'v' from tag '${{ github.ref_name }}'."
+          }
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Version: $version"
+
+      - name: Pack with Velopack
+        shell: pwsh
+        run: >
+          vpk pack
+          -u PiggyBank
+          -v ${{ steps.ver.outputs.version }}
+          -p publish/PiggyBank
+          -e PiggyBank.App.exe
+          -o Releases
+
+      - name: Create GitHub Release + upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: PiggyBank ${{ steps.ver.outputs.version }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            Releases/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

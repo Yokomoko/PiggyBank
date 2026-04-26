@@ -1,0 +1,103 @@
+<ui:FluentWindow x:Class="PiggyBank.App.Pockets.RecordDepositWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 AutomationProperties.AutomationId="RecordDepositWindow"
+                 Title="Record deposit — PiggyBank"
+                 Width="520" Height="560"
+                 WindowStartupLocation="CenterOwner"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="Record deposit — PiggyBank" />
+
+        <Grid Grid.Row="1" Margin="32,8,32,32">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <ui:TextBlock Grid.Row="0" FontTypography="TitleLarge" Text="Record deposit" />
+            <ui:TextBlock Grid.Row="1" Margin="0,4,0,16"
+                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                          Text="Auto-distributed into your pockets using each pocket's current AutoSave %." />
+
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ui:NumberBox Grid.Column="0" Margin="0,0,6,0"
+                              SpinButtonPlacementMode="Hidden"
+                              PlaceholderText="Amount £"
+                              Value="{Binding Amount, Mode=TwoWay}" />
+                <DatePicker Grid.Column="1" Margin="6,0,0,0"
+                            SelectedDate="{Binding DepositedOn, Converter={StaticResource DateOnlyToDateTime}, Mode=TwoWay}" />
+            </Grid>
+
+            <ui:TextBox Grid.Row="3" Margin="0,8,0,12"
+                        PlaceholderText="Notes (optional)"
+                        Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" />
+
+            <ui:Card Grid.Row="4" Padding="12">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <ui:TextBlock FontTypography="Subtitle" Text="Preview" />
+                    <ScrollViewer Grid.Row="1" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Preview}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,3">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <ui:TextBlock Text="{Binding PocketName}" />
+                                        <ui:TextBlock Grid.Column="1" Margin="8,0"
+                                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                      Text="{Binding Percent, StringFormat='{}{0:0.#}%'}" />
+                                        <ui:TextBlock Grid.Column="2"
+                                                      FontTypography="BodyStrong"
+                                                      Text="{Binding Share, StringFormat='£#\,##0.00'}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </ui:Card>
+
+            <Border Grid.Row="5" Margin="0,8,0,0" Padding="10,6" CornerRadius="6"
+                    Background="{DynamicResource SystemAccentColorLightBrush}"
+                    Visibility="{Binding HasUnallocated, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock>
+                    <Run Text="Unallocated: " />
+                    <Run FontWeight="SemiBold" Text="{Binding UnallocatedDisplay, Mode=OneWay}" />
+                    <Run Text=" (stays in whichever pocket holds your primary balance)." />
+                </TextBlock>
+            </Border>
+
+            <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                <ui:Button Content="Record"
+                           Appearance="Primary"
+                           AutomationProperties.AutomationId="ConfirmRecordDepositButton"
+                           Command="{Binding RecordCommand}"
+                           IsDefault="True" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

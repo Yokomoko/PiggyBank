@@ -1,0 +1,61 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tenant-leak-gate:
+    name: Tenant-leak gate
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore
+        run: dotnet restore PiggyBank.slnx
+      - name: Run tenant-leak suite
+        run: dotnet test tests/PiggyBank.Data.Tests/PiggyBank.Data.Tests.csproj --filter "FullyQualifiedName~Tenancy" --logger "console;verbosity=detailed"
+
+  build-and-test:
+    name: Build + unit/integration tests
+    needs: tenant-leak-gate
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore
+        run: dotnet restore PiggyBank.slnx
+      - name: Build
+        run: dotnet build PiggyBank.slnx --configuration Release --no-restore
+      - name: Test (excluding E2E)
+        run: dotnet test PiggyBank.slnx --configuration Release --no-build --filter "Category!=E2E" --logger "console;verbosity=normal" --collect:"XPlat Code Coverage"
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: tests/**/TestResults/**/coverage.cobertura.xml
+
+  e2e:
+    name: End-to-end (FlaUI)
+    needs: build-and-test
+    runs-on: windows-latest
+    # Allow E2E failures to not block merge while the suite stabilises.
+    # Flip this to false once the suite is proven reliable on the runner.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore
+        run: dotnet restore PiggyBank.slnx
+      - name: Build (Debug — the harness looks for bin/Debug)
+        run: dotnet build PiggyBank.slnx --configuration Debug
+      - name: Run E2E smoke
+        run: dotnet test tests/PiggyBank.App.EndToEndTests/PiggyBank.App.EndToEndTests.csproj --configuration Debug --no-build --filter "Category=E2E" --logger "console;verbosity=detailed"

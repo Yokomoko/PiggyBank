@@ -1,0 +1,23 @@
+<Application x:Class="PiggyBank.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:PiggyBank.App"
+             xmlns:conv="clr-namespace:PiggyBank.App.Converters"
+             ShutdownMode="OnExplicitShutdown">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Theme is resolved at startup via SettingsWindow.ApplyTheme
+                     (reads AppSettings). Using "Light" here is purely a fallback
+                     for the XAML designer — production theme comes from settings. -->
+                <ui:ThemesDictionary Theme="Light" xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" />
+                <ui:ControlsDictionary xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <conv:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+            <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+            <conv:HexToBrushConverter x:Key="HexToBrush" />
+            <conv:DateOnlyToDateTimeConverter x:Key="DateOnlyToDateTime" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

@@ -1,0 +1,92 @@
+<ui:FluentWindow x:Class="PiggyBank.App.Views.CreateProfileWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 AutomationProperties.AutomationId="CreateProfileWindow"
+                 Title="New profile — PiggyBank"
+                 Width="640" Height="620"
+                 WindowStartupLocation="CenterOwner"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="New profile — PiggyBank" />
+
+        <Grid Grid.Row="1" Margin="32,8,32,32">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <ui:TextBlock Grid.Row="0" FontTypography="TitleLarge" Text="Create profile" />
+        <ui:TextBlock Grid.Row="1" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                      Margin="0,4,0,16"
+                      Text="Give your profile a name and pick which categories to start with." />
+
+        <ui:TextBox Grid.Row="2"
+                    AutomationProperties.AutomationId="DisplayNameBox"
+                    PlaceholderText="Profile name"
+                    Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}" />
+
+        <StackPanel Grid.Row="3" Margin="0,16,0,0">
+            <ui:TextBlock FontTypography="BodyStrong" Text="Payday" />
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ui:TextBlock VerticalAlignment="Center"
+                              Text="Usually paid on day" />
+                <ui:NumberBox Grid.Column="1"
+                              AutomationProperties.AutomationId="PaydayDayBox"
+                              Margin="8,0,0,0"
+                              Minimum="1" Maximum="31"
+                              SmallChange="1"
+                              Value="{Binding PrimaryPaydayDayOfMonth, Mode=TwoWay}" />
+                <CheckBox Grid.Column="2"
+                          AutomationProperties.AutomationId="AdjustWeekendsBox"
+                          Margin="16,0,0,0"
+                          VerticalAlignment="Center"
+                          Content="Bump earlier on weekends / UK bank holidays"
+                          IsChecked="{Binding AdjustPaydayForWeekendsAndBankHolidays, Mode=TwoWay}" />
+            </Grid>
+            <ui:TextBlock Margin="0,16,0,8" FontTypography="BodyStrong"
+                          Text="Seed categories" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="4" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding SeedCategories}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="2" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                  Content="{Binding Name}"
+                                  Margin="0,3,16,3" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <ui:Button Content="Create"
+                       AutomationProperties.AutomationId="ConfirmCreateProfileButton"
+                       Appearance="Primary"
+                       Command="{Binding CreateCommand}"
+                       IsDefault="True" />
+        </StackPanel>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

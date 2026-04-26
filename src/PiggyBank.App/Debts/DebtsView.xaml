@@ -1,0 +1,342 @@
+<UserControl x:Class="PiggyBank.App.Debts.DebtsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:d1p1="clr-namespace:System.ComponentModel;assembly=WindowsBase">
+    <UserControl.Resources>
+        <CollectionViewSource x:Key="DebtsGrouped" Source="{Binding Debts}" IsLiveSortingRequested="True">
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="KindLabel" />
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
+    </UserControl.Resources>
+    <Grid Margin="24,16,24,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />  <!-- header -->
+            <RowDefinition Height="Auto" />  <!-- summary cards -->
+            <RowDefinition Height="Auto" />  <!-- payoff simulator -->
+            <RowDefinition Height="*" />     <!-- debt list -->
+            <RowDefinition Height="Auto" />  <!-- add-debt form -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <ui:TextBlock FontTypography="Title" Text="Debts" />
+            <ui:TextBlock FontTypography="Caption" Margin="0,2,0,0"
+                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                          Text="Track balances, add snapshots as statements arrive." />
+        </StackPanel>
+
+        <!-- Summary cards: short-term + long-term (mortgage) owed, + utilisation -->
+        <Grid Grid.Row="1" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <ui:Card Grid.Column="0" Padding="14,12" Margin="0,0,6,0">
+                <StackPanel>
+                    <ui:TextBlock FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  Text="SHORT-TERM OWED" />
+                    <ui:TextBlock FontTypography="TitleLarge"
+                                  AutomationProperties.AutomationId="TotalShortTermOwedText"
+                                  Text="{Binding TotalShortTermOwed, StringFormat='£#\,##0.00'}" />
+                    <ui:TextBlock FontTypography="Caption" Margin="0,2,0,0"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  Text="Credit cards, loans, finance" />
+                </StackPanel>
+            </ui:Card>
+            <ui:Card Grid.Column="1" Padding="14,12" Margin="6,0,6,0">
+                <StackPanel>
+                    <ui:TextBlock FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  Text="LONG-TERM OWED" />
+                    <ui:TextBlock FontTypography="TitleLarge"
+                                  AutomationProperties.AutomationId="TotalLongTermOwedText"
+                                  Text="{Binding TotalLongTermOwed, StringFormat='£#\,##0.00'}" />
+                    <ui:TextBlock FontTypography="Caption" Margin="0,2,0,0"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  Text="Mortgage" />
+                </StackPanel>
+            </ui:Card>
+            <ui:Card Grid.Column="2" Padding="14,12" Margin="6,0,0,0">
+                <StackPanel>
+                    <ui:TextBlock FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  Text="CREDIT UTILISATION" />
+                    <ui:TextBlock FontTypography="TitleLarge"
+                                  AutomationProperties.AutomationId="UtilisationText"
+                                  Text="{Binding CombinedUtilisation, StringFormat=P0}" />
+                    <ui:TextBlock FontTypography="Caption" Margin="0,2,0,0"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  Text="Revolving credit only" />
+                </StackPanel>
+            </ui:Card>
+        </Grid>
+
+        <!-- Payoff simulator -->
+        <ui:Card Grid.Row="2" Padding="14,12" Margin="0,0,0,12">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <ui:TextBlock FontTypography="Subtitle" Text="Payoff simulator" />
+                    <ui:TextBlock Margin="12,4,0,0" FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  Text="Short-term debts only (mortgage excluded). Compares avalanche vs snowball." />
+                </StackPanel>
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="160" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock VerticalAlignment="Center" Margin="0,0,8,0"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  Text="Extra per month £" />
+                    <ui:NumberBox Grid.Column="1"
+                                  AutomationProperties.AutomationId="ExtraMonthlyBox"
+                                  SpinButtonPlacementMode="Hidden"
+                                  PlaceholderText="e.g. 200"
+                                  Value="{Binding ExtraMonthly, Mode=TwoWay}" />
+                    <ui:Button Grid.Column="2" Margin="8,0,0,0" Appearance="Primary"
+                               Content="Run simulation"
+                               AutomationProperties.AutomationId="RunSimulationButton"
+                               Command="{Binding RunSimulationCommand}" />
+                </Grid>
+                <Grid Margin="0,10,0,0"
+                      Visibility="{Binding HasSimulation, Converter={StaticResource BoolToVisibility}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Padding="10,6" Margin="0,0,6,0" CornerRadius="6"
+                            Background="{DynamicResource ControlFillColorDefaultBrush}">
+                        <StackPanel>
+                            <ui:TextBlock FontSize="10" FontWeight="SemiBold"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                          Text="BASELINE · minimums only, no overpay" />
+                            <ui:TextBlock Margin="0,2,0,0" Text="{Binding BaselineSummary}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Padding="10,6" Margin="6,0,6,0" CornerRadius="6"
+                            Background="{DynamicResource ControlFillColorDefaultBrush}">
+                        <StackPanel>
+                            <ui:TextBlock FontSize="10" FontWeight="SemiBold"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                          Text="AVALANCHE · highest APR first" />
+                            <ui:TextBlock Margin="0,2,0,0" Text="{Binding AvalancheSummary}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2" Padding="10,6" Margin="6,0,0,0" CornerRadius="6"
+                            Background="{DynamicResource ControlFillColorDefaultBrush}">
+                        <StackPanel>
+                            <ui:TextBlock FontSize="10" FontWeight="SemiBold"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                          Text="SNOWBALL · smallest balance first" />
+                            <ui:TextBlock Margin="0,2,0,0" Text="{Binding SnowballSummary}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+                <ui:TextBlock Margin="0,8,0,0" FontTypography="Caption"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              Text="{Binding AvalancheSummary}"
+                              Visibility="{Binding HasSimulation, Converter={StaticResource InverseBoolToVisibility}}" />
+            </StackPanel>
+        </ui:Card>
+
+        <!-- Debt list -->
+        <ui:Card Grid.Row="3" Padding="16"
+                 VerticalAlignment="Stretch"
+                 VerticalContentAlignment="Stretch"
+                 HorizontalContentAlignment="Stretch">
+            <Grid VerticalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <ui:TextBlock FontTypography="Subtitle" Text="Debts" />
+
+                <!-- Column headers -->
+                <Grid Grid.Row="1" Margin="12,12,12,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="110" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="90" />
+                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="90" />
+                        <ColumnDefinition Width="70" />
+                        <ColumnDefinition Width="40" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock Grid.Column="0" FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="NAME / TYPE" />
+                    <ui:TextBlock Grid.Column="1" FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="BALANCE £" />
+                    <ui:TextBlock Grid.Column="2" FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="LIMIT £" />
+                    <ui:TextBlock Grid.Column="3" FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="APR %" />
+                    <ui:TextBlock Grid.Column="4" FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="MIN £" />
+                    <ui:TextBlock Grid.Column="5" FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="OVERPAY £" />
+                    <ui:TextBlock Grid.Column="6" FontTypography="Caption"
+                                  ToolTip="Deferred interest penalty on overpayments, in days. UK personal loans are typically 60."
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="OVERPAY PEN." />
+                    <ui:TextBlock Grid.Column="7" FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="UTIL." />
+                    <ui:TextBlock Grid.Column="8" FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="" />
+                </Grid>
+
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Source={StaticResource DebtsGrouped}}"
+                                  AutomationProperties.AutomationId="DebtList">
+                        <ItemsControl.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,12,0,4" Padding="0,0,0,4"
+                                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                                BorderThickness="0,0,0,1">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:TextBlock FontTypography="BodyStrong"
+                                                              Text="{Binding Name}" />
+                                                <ui:TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
+                                                              FontTypography="Caption"
+                                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                                    <Run Text="(" /><Run Text="{Binding ItemCount, Mode=OneWay}" /><Run Text=")" />
+                                                </ui:TextBlock>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ItemsControl.GroupStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,4" Padding="12" CornerRadius="6"
+                                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="130" />
+                                            <ColumnDefinition Width="110" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="90" />
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="90" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="40" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=LostFocus}" />
+                                            <ui:TextBlock Margin="2,2,0,0" FontTypography="Caption"
+                                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                          Text="{Binding KindLabel}" />
+                                        </StackPanel>
+                                        <!-- Editable balance — commit (LostFocus) records a snapshot for today. -->
+                                        <ui:NumberBox Grid.Column="1" Margin="8,0,6,0"
+                                                      SpinButtonPlacementMode="Hidden"
+                                                      Value="{Binding BalanceInput, Mode=TwoWay}" />
+                                        <ui:NumberBox Grid.Column="2" Margin="0,0,6,0"
+                                                      SpinButtonPlacementMode="Hidden"
+                                                      Value="{Binding Limit, Mode=TwoWay}"
+                                                      IsEnabled="{Binding HasLimit}" />
+                                        <ui:NumberBox Grid.Column="3" Margin="0,0,6,0"
+                                                      SpinButtonPlacementMode="Hidden"
+                                                      Value="{Binding AprPercent, Mode=TwoWay}" />
+                                        <ui:NumberBox Grid.Column="4" Margin="0,0,6,0"
+                                                      SpinButtonPlacementMode="Hidden"
+                                                      Value="{Binding MinimumPayment, Mode=TwoWay}" />
+                                        <ui:NumberBox Grid.Column="5" Margin="0,0,6,0"
+                                                      SpinButtonPlacementMode="Hidden"
+                                                      Value="{Binding ScheduledOverpayment, Mode=TwoWay}" />
+                                        <ui:NumberBox Grid.Column="6" Margin="0,0,6,0"
+                                                      SpinButtonPlacementMode="Hidden"
+                                                      ToolTip="Deferred interest penalty days (0 or blank = none; UK personal loans typically 60)"
+                                                      Value="{Binding OverpaymentPenaltyDays, Mode=TwoWay}" />
+                                        <ui:TextBlock Grid.Column="7" VerticalAlignment="Center"
+                                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                      Text="{Binding UtilisationDisplay}" />
+                                        <ui:Button Grid.Column="8" Appearance="Transparent"
+                                                   ToolTip="Archive debt"
+                                                   Command="{Binding DataContext.ArchiveDebtCommand,
+                                                                     RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                   CommandParameter="{Binding}">
+                                            <ui:SymbolIcon Symbol="Archive24" FontSize="14" />
+                                        </ui:Button>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </ui:Card>
+
+        <!-- Add-debt form -->
+        <Border Grid.Row="4" Margin="0,12,0,0" Padding="12" CornerRadius="6"
+                Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <StackPanel>
+                <ui:TextBlock FontTypography="Caption" Margin="0,0,0,6"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              Text="ADD DEBT" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="160" />
+                        <ColumnDefinition Width="90" />
+                        <ColumnDefinition Width="90" />
+                        <ColumnDefinition Width="70" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="90" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBox Grid.Column="0" Margin="0,0,6,0"
+                                AutomationProperties.AutomationId="AddDebtNameBox"
+                                PlaceholderText="Name (e.g. Halifax CC)"
+                                Text="{Binding NewDebtName, UpdateSourceTrigger=PropertyChanged}" />
+                    <ComboBox Grid.Column="1" Margin="0,0,6,0"
+                              ItemsSource="{Binding DebtKinds}"
+                              SelectedItem="{Binding NewDebtKind, Mode=TwoWay}"
+                              DisplayMemberPath="Label" />
+                    <ui:NumberBox Grid.Column="2" Margin="0,0,6,0"
+                                  SpinButtonPlacementMode="Hidden"
+                                  PlaceholderText="Limit £"
+                                  Value="{Binding NewDebtLimit, Mode=TwoWay}" />
+                    <ui:NumberBox Grid.Column="3" Margin="0,0,6,0"
+                                  SpinButtonPlacementMode="Hidden"
+                                  PlaceholderText="Owed £"
+                                  Value="{Binding NewDebtOpeningBalance, Mode=TwoWay}" />
+                    <ui:NumberBox Grid.Column="4" Margin="0,0,6,0"
+                                  SpinButtonPlacementMode="Hidden"
+                                  PlaceholderText="APR %"
+                                  Value="{Binding NewDebtAprPercent, Mode=TwoWay}" />
+                    <ui:NumberBox Grid.Column="5" Margin="0,0,6,0"
+                                  SpinButtonPlacementMode="Hidden"
+                                  PlaceholderText="Min £/mo"
+                                  Value="{Binding NewDebtMinimumPayment, Mode=TwoWay}" />
+                    <ui:NumberBox Grid.Column="6" Margin="0,0,6,0"
+                                  SpinButtonPlacementMode="Hidden"
+                                  PlaceholderText="Overpay £/mo"
+                                  Value="{Binding NewDebtScheduledOverpayment, Mode=TwoWay}" />
+                    <ui:NumberBox Grid.Column="7" Margin="0,0,6,0"
+                                  SpinButtonPlacementMode="Hidden"
+                                  PlaceholderText="Pen. days"
+                                  ToolTip="Deferred interest penalty on overpayments, in days. UK personal loan = 60, credit card = 0."
+                                  Value="{Binding NewDebtOverpaymentPenaltyDays, Mode=TwoWay}" />
+                    <ui:Button Grid.Column="8" Appearance="Primary"
+                               AutomationProperties.AutomationId="AddDebtButton"
+                               Content="Add"
+                               Command="{Binding AddDebtCommand}" />
+                </Grid>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,167 @@
+<UserControl x:Class="PiggyBank.App.Analytics.AnalyticsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF">
+    <Grid Margin="24,16,24,16">
+        <Grid.RowDefinitions>
+            <!-- 0: compact header with range selector -->
+            <RowDefinition Height="Auto" />
+            <!-- 1: two charts side-by-side (fills remaining height) -->
+            <RowDefinition Height="2*" />
+            <!-- 2: month history list (smaller fixed share) -->
+            <RowDefinition Height="*" MinHeight="160" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <ui:TextBlock FontTypography="Title" Text="Analytics" />
+                <ui:TextBlock FontTypography="Caption" Margin="0,2,0,0"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              Text="{Binding RangeLabel}" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <ui:Button Content="3m" Margin="0,0,4,0" Command="{Binding SetRangeCommand}" CommandParameter="3" />
+                <ui:Button Content="6m" Margin="0,0,4,0" Command="{Binding SetRangeCommand}" CommandParameter="6" />
+                <ui:Button Content="12m" Command="{Binding SetRangeCommand}" CommandParameter="12" />
+                <!-- Per-row Export buttons in the Months list below — no top-level
+                     buttons here: they were silent without a row-selection mechanism. -->
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ui:Card Grid.Column="0" Margin="0,0,6,0" Padding="16"
+                     VerticalAlignment="Stretch"
+                     VerticalContentAlignment="Stretch"
+                     HorizontalContentAlignment="Stretch">
+                <Grid VerticalAlignment="Stretch">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <ui:TextBlock FontTypography="Subtitle" Text="Monthly spend" />
+                    <lvc:CartesianChart Grid.Row="1" Margin="0,8,0,0"
+                                        Background="Transparent"
+                                        AutomationProperties.AutomationId="MonthlySpendChart"
+                                        Series="{Binding MonthlySpendSeries}"
+                                        XAxes="{Binding MonthlySpendXAxis}"
+                                        YAxes="{Binding MonthlySpendYAxis}" />
+                </Grid>
+            </ui:Card>
+
+            <ui:Card Grid.Column="1" Margin="6,0,0,0" Padding="16"
+                     VerticalAlignment="Stretch"
+                     VerticalContentAlignment="Stretch"
+                     HorizontalContentAlignment="Stretch">
+                <Grid VerticalAlignment="Stretch">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <ui:TextBlock FontTypography="Subtitle" Text="Spend by category (top 10)" />
+                    <lvc:CartesianChart Grid.Row="1" Margin="0,8,0,0"
+                                        Background="Transparent"
+                                        AutomationProperties.AutomationId="CategorySpendChart"
+                                        Series="{Binding CategorySpendSeries}"
+                                        XAxes="{Binding CategorySpendXAxis}"
+                                        YAxes="{Binding CategorySpendYAxis}" />
+                </Grid>
+            </ui:Card>
+        </Grid>
+
+        <!-- Months list (click to select, Export CSV in header acts on selected) -->
+        <ui:Card Grid.Row="2" Padding="0"
+                 VerticalAlignment="Stretch"
+                 VerticalContentAlignment="Stretch"
+                 HorizontalContentAlignment="Stretch">
+            <Grid VerticalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <ui:TextBlock Grid.Row="0" FontTypography="Subtitle"
+                              Margin="14,12,14,8" Text="Months" />
+                <Border Grid.Row="1" Padding="14,6,14,6"
+                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="0,0,0,1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="130" />
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="100" />
+                            <ColumnDefinition Width="100" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" FontWeight="SemiBold" FontSize="11"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="PERIOD" />
+                        <TextBlock Grid.Column="1" FontWeight="SemiBold" FontSize="11"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="STATUS" />
+                        <TextBlock Grid.Column="2" FontWeight="SemiBold" FontSize="11"
+                                   TextAlignment="Right" Margin="0,0,12,0"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="NET SPEND" />
+                    </Grid>
+                </Border>
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Months}"
+                                  AutomationProperties.AutomationId="MonthsList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="14,6,14,6"
+                                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                        BorderThickness="0,0,0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="200" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="130" />
+                                            <ColumnDefinition Width="80" />
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="100" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                                                   Text="{Binding PeriodLabel}" />
+                                        <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                   Text="{Binding Status}" />
+                                        <TextBlock Grid.Column="2" VerticalAlignment="Center"
+                                                   TextAlignment="Right" Margin="0,0,12,0"
+                                                   Text="{Binding NetSpend, StringFormat='£#,##0.00'}" />
+                                        <ui:Button Grid.Column="3" Appearance="Secondary"
+                                                   Content="View"
+                                                   Padding="8,2" Margin="0,0,4,0"
+                                                   Command="{Binding DataContext.ViewMonthCommand,
+                                                                     RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                   CommandParameter="{Binding}" />
+                                        <ui:Button Grid.Column="4" Appearance="Secondary"
+                                                   Content="Export CSV"
+                                                   Padding="8,2" Margin="0,0,4,0"
+                                                   Command="{Binding DataContext.ExportMonthCsvCommand,
+                                                                     RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                   CommandParameter="{Binding}" />
+                                        <ui:Button Grid.Column="5" Appearance="Secondary"
+                                                   Content="Export PDF"
+                                                   Padding="8,2"
+                                                   Command="{Binding DataContext.ExportMonthPdfCommand,
+                                                                     RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                   CommandParameter="{Binding}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </ui:Card>
+    </Grid>
+</UserControl>

@@ -1,0 +1,48 @@
+## Visual Studio / Rider / dotnet
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+.vs/
+.idea/
+*.swp
+*.pdb
+artifacts/
+TestResults/
+
+## EF Core design-time
+design-time.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+## Local settings
+appsettings.Local.json
+*.local.json
+secrets.json
+
+## Build outputs
+*.dll
+*.exe
+*.nupkg
+publish/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Logs
+*.log
+logs/
+
+## Test coverage
+coverage/
+*.coverage
+*.coveragexml
+*.trx
+
+## Personal scratch artifacts (not for public repo)
+*.xlsx
+HorrendousHomeScreen.png

@@ -1,0 +1,317 @@
+<UserControl x:Class="PiggyBank.App.Joint.JointView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <Grid Margin="24,16,24,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />  <!-- header -->
+            <RowDefinition Height="*" />     <!-- list / empty state -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <ui:TextBlock FontTypography="Title" Text="Joint" />
+                <ui:TextBlock FontTypography="Caption" Margin="0,2,0,0"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              Text="Shared bank accounts. Aggregate household contributions vs outgoings — visible from every profile." />
+            </StackPanel>
+            <ui:Button Grid.Column="1" Appearance="Primary"
+                       AutomationProperties.AutomationId="ShowAddJointAccountButton"
+                       Content="Add account"
+                       Visibility="{Binding HasAccounts, Converter={StaticResource BoolToVisibility}}"
+                       Click="OnAddAccountClicked" />
+        </Grid>
+
+        <!-- Empty state with inline add-account form -->
+        <ui:Card Grid.Row="1" Padding="40"
+                 VerticalAlignment="Center" HorizontalAlignment="Center"
+                 Visibility="{Binding HasAccounts, Converter={StaticResource InverseBoolToVisibility}}">
+            <StackPanel HorizontalAlignment="Center" MinWidth="420">
+                <ui:TextBlock FontTypography="Title" HorizontalAlignment="Center"
+                              Text="No joint accounts yet" />
+                <ui:TextBlock Margin="0,8,0,16" MaxWidth="460" TextAlignment="Center"
+                              TextWrapping="Wrap"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              Text="Set up a shared account so both profiles can see what's going in and out — bills, rent, household. Add contributors and outgoings inside the account once it's created." />
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBox Grid.Column="0" Margin="0,0,6,0"
+                                AutomationProperties.AutomationId="NewJointAccountNameBox"
+                                PlaceholderText="Account name (e.g. Joint bills)"
+                                Text="{Binding NewAccountName, UpdateSourceTrigger=PropertyChanged}" />
+                    <ui:TextBox Grid.Column="1" Margin="0,0,6,0"
+                                AutomationProperties.AutomationId="NewJointAccountBankBox"
+                                PlaceholderText="Bank (optional)"
+                                Text="{Binding NewAccountBank, UpdateSourceTrigger=PropertyChanged}" />
+                    <ui:Button Grid.Column="2" Appearance="Primary"
+                               AutomationProperties.AutomationId="AddJointAccountButton"
+                               Content="Create account"
+                               Command="{Binding AddAccountCommand}" />
+                </Grid>
+            </StackPanel>
+        </ui:Card>
+
+        <!-- Account list -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
+                      Visibility="{Binding HasAccounts, Converter={StaticResource BoolToVisibility}}">
+            <StackPanel>
+                <!-- Inline add-account form (collapsed by default; toggled by header button) -->
+                <ui:Card x:Name="AddAccountCard" Padding="14,10" Margin="0,0,0,12"
+                         Visibility="Collapsed">
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Caption" Margin="0,0,0,6"
+                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                      Text="ADD JOINT ACCOUNT" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBox Grid.Column="0" Margin="0,0,6,0"
+                                        AutomationProperties.AutomationId="NewJointAccountNameBox"
+                                        PlaceholderText="Account name"
+                                        Text="{Binding NewAccountName, UpdateSourceTrigger=PropertyChanged}" />
+                            <ui:TextBox Grid.Column="1" Margin="0,0,6,0"
+                                        AutomationProperties.AutomationId="NewJointAccountBankBox"
+                                        PlaceholderText="Bank (optional)"
+                                        Text="{Binding NewAccountBank, UpdateSourceTrigger=PropertyChanged}" />
+                            <ui:Button Grid.Column="2" Appearance="Primary"
+                                       AutomationProperties.AutomationId="AddJointAccountButton"
+                                       Content="Add"
+                                       Command="{Binding AddAccountCommand}" />
+                        </Grid>
+                    </StackPanel>
+                </ui:Card>
+
+                <ItemsControl ItemsSource="{Binding Accounts}"
+                              AutomationProperties.AutomationId="JointAccountList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ui:Card Margin="0,0,0,12" Padding="0">
+                                <StackPanel>
+                                    <!-- Account header: name + bank + archive -->
+                                    <Border Padding="14,10,14,10"
+                                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                            BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="200" />
+                                                <ColumnDefinition Width="40" />
+                                            </Grid.ColumnDefinitions>
+                                            <ui:TextBox Grid.Column="0" Margin="0,0,6,0"
+                                                        PlaceholderText="Account name"
+                                                        Text="{Binding Name, UpdateSourceTrigger=LostFocus}" />
+                                            <ui:TextBox Grid.Column="1" Margin="0,0,6,0"
+                                                        PlaceholderText="Bank (optional)"
+                                                        Text="{Binding BankName, UpdateSourceTrigger=LostFocus}" />
+                                            <ui:Button Grid.Column="2" Appearance="Transparent"
+                                                       ToolTip="Archive joint account"
+                                                       Command="{Binding DataContext.ArchiveAccountCommand,
+                                                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                       CommandParameter="{Binding}">
+                                                <ui:SymbolIcon Symbol="Archive24" FontSize="14" />
+                                            </ui:Button>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Headline strip -->
+                                    <Border Padding="14,10,14,10"
+                                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                            BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <ui:TextBlock FontSize="10" FontWeight="SemiBold"
+                                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                              Text="HOUSEHOLD MONTHLY" />
+                                                <ui:TextBlock FontTypography="BodyStrong"
+                                                              Text="{Binding HeadlineText}" />
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Padding="10,6" CornerRadius="6">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background"
+                                                                Value="{DynamicResource ControlFillColorDefaultBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsShortfall}" Value="True">
+                                                                <Setter Property="Background"
+                                                                        Value="{DynamicResource SystemFillColorCriticalBackgroundBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <ui:TextBlock FontTypography="BodyStrong"
+                                                              Text="{Binding SurplusText}">
+                                                    <ui:TextBlock.Style>
+                                                        <Style TargetType="ui:TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsShortfall}" Value="True">
+                                                                    <Setter Property="Foreground"
+                                                                            Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ui:TextBlock.Style>
+                                                </ui:TextBlock>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Two-column body: Contributions | Outgoings -->
+                                    <Grid Margin="14,10,14,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Contributions -->
+                                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                            <ui:TextBlock FontSize="10" FontWeight="SemiBold" Margin="0,0,0,6"
+                                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                          Text="CONTRIBUTIONS IN" />
+                                            <ItemsControl ItemsSource="{Binding Contributions}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Padding="0,4,0,4"
+                                                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                                                BorderThickness="0,0,0,1">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="120" />
+                                                                    <ColumnDefinition Width="40" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <ui:TextBlock VerticalAlignment="Center"
+                                                                              Text="{Binding ProfileDisplayName}" />
+                                                                <ui:NumberBox Grid.Column="1" Margin="0,0,6,0"
+                                                                              SpinButtonPlacementMode="Hidden"
+                                                                              Value="{Binding MonthlyAmount, Mode=TwoWay}" />
+                                                                <ui:Button Grid.Column="2" Appearance="Transparent"
+                                                                           ToolTip="Remove contribution"
+                                                                           Command="{Binding DataContext.DeleteContributionCommand,
+                                                                                             RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                           CommandParameter="{Binding}">
+                                                                    <ui:SymbolIcon Symbol="Delete24" FontSize="14" />
+                                                                </ui:Button>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <ui:TextBlock Margin="0,6,0,0" FontTypography="Caption"
+                                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                          Text="No contributions yet — add a profile and amount below."
+                                                          Visibility="{Binding HasNoContributions, Converter={StaticResource BoolToVisibility}}" />
+                                            <!-- Add-contribution row -->
+                                            <Border Margin="0,8,0,0" Padding="8" CornerRadius="6"
+                                                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="120" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <ComboBox Grid.Column="0" Margin="0,0,6,0"
+                                                              ItemsSource="{Binding DataContext.Profiles,
+                                                                                    RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                              SelectedItem="{Binding NewContributionProfile, Mode=TwoWay}"
+                                                              DisplayMemberPath="DisplayName" />
+                                                    <ui:NumberBox Grid.Column="1" Margin="0,0,6,0"
+                                                                  SpinButtonPlacementMode="Hidden"
+                                                                  PlaceholderText="£/mo"
+                                                                  Value="{Binding NewContributionAmount, Mode=TwoWay}" />
+                                                    <ui:Button Grid.Column="2" Appearance="Secondary"
+                                                               Content="Add"
+                                                               Command="{Binding DataContext.AddContributionCommand,
+                                                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                               CommandParameter="{Binding}" />
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
+
+                                        <!-- Outgoings -->
+                                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                            <ui:TextBlock FontSize="10" FontWeight="SemiBold" Margin="0,0,0,6"
+                                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                          Text="OUTGOINGS OUT" />
+                                            <ItemsControl ItemsSource="{Binding Outgoings}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Padding="0,4,0,4"
+                                                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                                                BorderThickness="0,0,0,1">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="120" />
+                                                                    <ColumnDefinition Width="40" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <ui:TextBox Margin="0,0,6,0"
+                                                                            Text="{Binding Name, UpdateSourceTrigger=LostFocus}" />
+                                                                <ui:NumberBox Grid.Column="1" Margin="0,0,6,0"
+                                                                              SpinButtonPlacementMode="Hidden"
+                                                                              Value="{Binding AmountInput, Mode=TwoWay}" />
+                                                                <ui:Button Grid.Column="2" Appearance="Transparent"
+                                                                           ToolTip="Remove outgoing"
+                                                                           Command="{Binding DataContext.DeleteOutgoingCommand,
+                                                                                             RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                           CommandParameter="{Binding}">
+                                                                    <ui:SymbolIcon Symbol="Delete24" FontSize="14" />
+                                                                </ui:Button>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <ui:TextBlock Margin="0,6,0,0" FontTypography="Caption"
+                                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                          Text="No outgoings yet — add the bills paid from this account below."
+                                                          Visibility="{Binding HasNoOutgoings, Converter={StaticResource BoolToVisibility}}" />
+                                            <!-- Add-outgoing row -->
+                                            <Border Margin="0,8,0,0" Padding="8" CornerRadius="6"
+                                                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="120" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <ui:TextBox Grid.Column="0" Margin="0,0,6,0"
+                                                                PlaceholderText="e.g. Rent"
+                                                                Text="{Binding NewOutgoingName, UpdateSourceTrigger=PropertyChanged}" />
+                                                    <ui:NumberBox Grid.Column="1" Margin="0,0,6,0"
+                                                                  SpinButtonPlacementMode="Hidden"
+                                                                  PlaceholderText="£/mo"
+                                                                  Value="{Binding NewOutgoingAmount, Mode=TwoWay}" />
+                                                    <ui:Button Grid.Column="2" Appearance="Secondary"
+                                                               Content="Add"
+                                                               Command="{Binding DataContext.AddOutgoingCommand,
+                                                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                               CommandParameter="{Binding}" />
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </ui:Card>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

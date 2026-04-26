@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PiggyBank.App/PiggyBank.App.csproj" />
+    <Project Path="src/PiggyBank.Core/PiggyBank.Core.csproj" />
+    <Project Path="src/PiggyBank.Data/PiggyBank.Data.csproj" />
+    <Project Path="src/PiggyBank.Import/PiggyBank.Import.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PiggyBank.App.EndToEndTests/PiggyBank.App.EndToEndTests.csproj" />
+    <Project Path="tests/PiggyBank.App.Tests/PiggyBank.App.Tests.csproj" />
+    <Project Path="tests/PiggyBank.Core.Tests/PiggyBank.Core.Tests.csproj" />
+    <Project Path="tests/PiggyBank.Data.Tests/PiggyBank.Data.Tests.csproj" />
+    <Project Path="tests/PiggyBank.Import.Tests/PiggyBank.Import.Tests.csproj" />
+  </Folder>
+</Solution>

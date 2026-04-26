@@ -1,0 +1,364 @@
+<UserControl x:Class="PiggyBank.App.SideIncome.SideIncomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <Grid Margin="24,16,24,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />  <!-- header -->
+            <RowDefinition Height="Auto" />  <!-- tax year strip -->
+            <RowDefinition Height="Auto" />  <!-- (reserved) -->
+            <RowDefinition Height="*" />     <!-- months list -->
+            <RowDefinition Height="Auto" />  <!-- add form -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <ui:TextBlock FontTypography="Title" Text="Side income" />
+                <ui:TextBlock FontTypography="Caption" Margin="0,2,0,0"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              Text="Cash jobs, freelance, bonuses. Grouped by calendar month. Allocate to a pocket or the main ledger." />
+            </StackPanel>
+            <Border Grid.Column="1" Padding="10,6" Margin="0,0,8,0" CornerRadius="6"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <ui:TextBlock FontSize="10" FontWeight="SemiBold"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  Text="TOTAL EARNED" />
+                    <ui:TextBlock FontTypography="BodyStrong"
+                                  Text="{Binding TotalEarned, StringFormat='£#\,##0.00'}" />
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Padding="10,6" CornerRadius="6"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <StackPanel>
+                    <ui:TextBlock FontSize="10" FontWeight="SemiBold"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  Text="UNALLOCATED" />
+                    <ui:TextBlock FontTypography="BodyStrong"
+                                  Text="{Binding TotalUnallocated, StringFormat='£#\,##0.00'}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Tax-year set-aside strip + band picker -->
+        <ui:Card Grid.Row="1" Padding="14,10" Margin="0,0,0,12"
+                 Visibility="{Binding HasEntries, Converter={StaticResource BoolToVisibility}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="80" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <ui:TextBlock FontTypography="Subtitle" Text="Tax set-aside" />
+                        <ui:TextBlock FontTypography="Caption"
+                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                      Text="UK tax year runs 6 Apr – 5 Apr. Ballpark only — not a substitute for filing." />
+                    </StackPanel>
+                    <ComboBox Grid.Column="1" Width="280" Margin="6,0"
+                              VerticalAlignment="Center"
+                              ItemsSource="{Binding TaxBands}"
+                              SelectedItem="{Binding SelectedTaxBand, Mode=TwoWay}"
+                              DisplayMemberPath="Label" />
+                    <ui:NumberBox Grid.Column="2"
+                                  VerticalAlignment="Center"
+                                  SpinButtonPlacementMode="Hidden"
+                                  PlaceholderText="%"
+                                  IsEnabled="{Binding IsCustomBand}"
+                                  Value="{Binding CustomTaxRatePercent, Mode=TwoWay}" />
+                </Grid>
+                <ItemsControl Grid.Row="1" Margin="0,10,0,0"
+                              ItemsSource="{Binding TaxYears}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="10,6" Margin="0,0,8,0" CornerRadius="6"
+                                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                                <StackPanel>
+                                    <ui:TextBlock FontSize="10" FontWeight="SemiBold"
+                                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                                        <Run Text="TAX YEAR " /><Run Text="{Binding Label, Mode=OneWay}" />
+                                    </ui:TextBlock>
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:TextBlock FontTypography="BodyStrong"
+                                                      Text="{Binding TotalEarned, StringFormat='Earned £#\,##0.00', Mode=OneWay}" />
+                                        <ui:TextBlock Margin="12,0,0,0" FontTypography="BodyStrong"
+                                                      Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                                      Text="{Binding SetAside, StringFormat='Set aside £#\,##0.00', Mode=OneWay}" />
+                                    </StackPanel>
+                                    <ui:TextBlock FontSize="10"
+                                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                  Text="{Binding Note}" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </ui:Card>
+
+        <!-- Empty state -->
+        <ui:Card Grid.Row="3" Padding="40"
+                 VerticalAlignment="Center" HorizontalAlignment="Center"
+                 Visibility="{Binding HasEntries, Converter={StaticResource InverseBoolToVisibility}}">
+            <StackPanel HorizontalAlignment="Center">
+                <ui:TextBlock FontTypography="Title" HorizontalAlignment="Center" Text="No side income yet" />
+                <ui:TextBlock FontTypography="Body" Margin="0,8,0,0" HorizontalAlignment="Center"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              TextWrapping="Wrap" MaxWidth="420" TextAlignment="Center"
+                              Text="Log cash jobs, freelance gigs or ad-hoc bonuses below. You can allocate any entry to a savings pocket or as income on the main ledger." />
+            </StackPanel>
+        </ui:Card>
+
+        <!-- Month groups -->
+        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto"
+                      Visibility="{Binding HasEntries, Converter={StaticResource BoolToVisibility}}">
+            <ItemsControl ItemsSource="{Binding Months}"
+                          AutomationProperties.AutomationId="SideIncomeMonthList">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ui:Card Margin="0,0,0,8" Padding="0">
+                            <StackPanel>
+                                <!-- Month header with totals -->
+                                <Border Padding="14,10,14,10"
+                                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                        BorderThickness="0,0,0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <ui:TextBlock VerticalAlignment="Center"
+                                                      FontTypography="BodyStrong"
+                                                      Text="{Binding MonthLabel}" />
+                                        <StackPanel Grid.Column="1" Margin="0,0,16,0" VerticalAlignment="Center">
+                                            <ui:TextBlock FontSize="10" FontWeight="SemiBold"
+                                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                          Text="EARNED" />
+                                            <ui:TextBlock Text="{Binding TotalEarnedDisplay}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Margin="0,0,16,0" VerticalAlignment="Center">
+                                            <ui:TextBlock FontSize="10" FontWeight="SemiBold"
+                                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                          Text="REMAINING" />
+                                            <ui:TextBlock Text="{Binding RemainingDisplay}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="3" Orientation="Horizontal"
+                                                    VerticalAlignment="Center">
+                                            <ui:Button Margin="0,0,6,0"
+                                                       Appearance="Secondary"
+                                                       Content="Email"
+                                                       Padding="10,4"
+                                                       ToolTip="Compose an email invoice for this month and open your default mail client."
+                                                       Command="{Binding DataContext.EmailMonthCommand,
+                                                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                       CommandParameter="{Binding}" />
+                                            <ui:Button Margin="0,0,6,0"
+                                                       Appearance="Secondary"
+                                                       Content="Copy hours"
+                                                       Padding="10,4"
+                                                       ToolTip="Copy a styled hours table to the clipboard. Paste into your email body (Ctrl+V)."
+                                                       Command="{Binding DataContext.CopyHoursMonthCommand,
+                                                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                       CommandParameter="{Binding}" />
+                                            <ui:Button Appearance="Secondary"
+                                                       Content="Allocate month"
+                                                       Padding="10,4"
+                                                       ToolTip="Allocate every entry's remaining to one target in one go."
+                                                       Command="{Binding DataContext.AllocateMonthCommand,
+                                                                         RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                       CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Column headers -->
+                                <Border Padding="14,6,14,6"
+                                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                        BorderThickness="0,0,0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="110" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="130" />
+                                            <ColumnDefinition Width="120" />
+                                            <ColumnDefinition Width="120" />
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="40" />
+                                        </Grid.ColumnDefinitions>
+                                        <ui:TextBlock Grid.Column="0" FontSize="10" FontWeight="SemiBold"
+                                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="PAID" />
+                                        <ui:TextBlock Grid.Column="1" FontSize="10" FontWeight="SemiBold"
+                                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="DESCRIPTION" />
+                                        <ui:TextBlock Grid.Column="2" FontSize="10" FontWeight="SemiBold"
+                                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="DURATION × RATE" />
+                                        <ui:TextBlock Grid.Column="3" FontSize="10" FontWeight="SemiBold" TextAlignment="Right" Margin="0,0,12,0"
+                                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="TOTAL" />
+                                        <ui:TextBlock Grid.Column="4" FontSize="10" FontWeight="SemiBold" TextAlignment="Right" Margin="0,0,12,0"
+                                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="REMAINING" />
+                                        <ui:TextBlock Grid.Column="5" FontSize="10" FontWeight="SemiBold"
+                                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="" />
+                                        <ui:TextBlock Grid.Column="6" FontSize="10" FontWeight="SemiBold"
+                                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="" />
+                                    </Grid>
+                                </Border>
+
+                                <!-- Entry rows -->
+                                <ItemsControl ItemsSource="{Binding Entries}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="14,6,14,6"
+                                                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                                    BorderThickness="0,0,0,1">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="110" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="130" />
+                                                        <ColumnDefinition Width="120" />
+                                                        <ColumnDefinition Width="120" />
+                                                        <ColumnDefinition Width="100" />
+                                                        <ColumnDefinition Width="40" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                                                               Text="{Binding PaidOn, StringFormat='dd MMM yyyy'}" />
+                                                    <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                                               Text="{Binding Description}" />
+                                                    <TextBlock Grid.Column="2" VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                               Text="{Binding DurationRateDisplay}" />
+                                                    <TextBlock Grid.Column="3" VerticalAlignment="Center"
+                                                               TextAlignment="Right" Margin="0,0,12,0"
+                                                               FontWeight="SemiBold"
+                                                               Text="{Binding TotalDisplay}" />
+                                                    <TextBlock Grid.Column="4" VerticalAlignment="Center"
+                                                               TextAlignment="Right" Margin="0,0,12,0"
+                                                               Text="{Binding RemainingDisplay}" />
+                                                    <ui:Button Grid.Column="5" Appearance="Secondary"
+                                                               Content="Allocate"
+                                                               Padding="8,2"
+                                                               IsEnabled="{Binding HasRemaining}"
+                                                               Command="{Binding DataContext.AllocateCommand,
+                                                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                               CommandParameter="{Binding}" />
+                                                    <ui:Button Grid.Column="6" Appearance="Transparent"
+                                                               ToolTip="Delete entry"
+                                                               Command="{Binding DataContext.DeleteEntryCommand,
+                                                                                 RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                               CommandParameter="{Binding}">
+                                                        <ui:SymbolIcon Symbol="Delete24" FontSize="14" />
+                                                    </ui:Button>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ui:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Add-entry form -->
+        <ui:Card Grid.Row="4" Margin="0,12,0,0" Padding="14,10">
+            <StackPanel>
+                <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock FontTypography="Caption" VerticalAlignment="Center"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  Text="LOG SIDE INCOME" />
+                    <!-- Template picker: pre-fills the form for recurring gigs. -->
+                    <ComboBox Grid.Column="1" Width="200" Margin="0,0,6,0"
+                              AutomationProperties.AutomationId="TemplatesComboBox"
+                              ItemsSource="{Binding Templates}"
+                              DisplayMemberPath="Name"
+                              SelectionChanged="OnTemplateSelected"
+                              Visibility="{Binding HasTemplates, Converter={StaticResource BoolToVisibility}, FallbackValue=Visible}" />
+                    <ui:Button Grid.Column="2" Appearance="Secondary"
+                               Content="Save as template"
+                               Padding="8,2"
+                               ToolTip="Save the current Description / Hours / Rate / Total as a reusable template."
+                               Command="{Binding SaveTemplateCommand}" />
+                </Grid>
+                <!-- Column captions so each input is labelled, not just placeholdered -->
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="90" />
+                        <ColumnDefinition Width="90" />
+                        <ColumnDefinition Width="110" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock Grid.Column="0" FontSize="10" FontWeight="SemiBold"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="PAID ON" />
+                    <ui:TextBlock Grid.Column="1" Margin="6,0,0,0" FontSize="10" FontWeight="SemiBold"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="DESCRIPTION" />
+                    <ui:TextBlock Grid.Column="2" Margin="6,0,0,0" FontSize="10" FontWeight="SemiBold"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="HOURS" />
+                    <ui:TextBlock Grid.Column="3" Margin="6,0,0,0" FontSize="10" FontWeight="SemiBold"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="RATE £" />
+                    <ui:TextBlock Grid.Column="4" Margin="6,0,0,0" FontSize="10" FontWeight="SemiBold"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="TOTAL £" />
+                </Grid>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="90" />
+                        <ColumnDefinition Width="90" />
+                        <ColumnDefinition Width="110" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <DatePicker Grid.Column="0" Margin="0,0,6,0"
+                                SelectedDate="{Binding NewPaidOn, Converter={StaticResource DateOnlyToDateTime}, Mode=TwoWay}" />
+                    <ui:TextBox Grid.Column="1" Margin="0,0,6,0"
+                                AutomationProperties.AutomationId="NewDescriptionBox"
+                                PlaceholderText="e.g. Babysitting"
+                                Text="{Binding NewDescription, UpdateSourceTrigger=PropertyChanged}" />
+                    <ui:NumberBox Grid.Column="2" Margin="0,0,6,0"
+                                  AutomationProperties.AutomationId="NewDurationBox"
+                                  SpinButtonPlacementMode="Hidden"
+                                  Value="{Binding NewDurationHours, Mode=TwoWay}" />
+                    <ui:NumberBox Grid.Column="3" Margin="0,0,6,0"
+                                  AutomationProperties.AutomationId="NewRateBox"
+                                  SpinButtonPlacementMode="Hidden"
+                                  Value="{Binding NewHourlyRate, Mode=TwoWay}" />
+                    <ui:NumberBox Grid.Column="4" Margin="0,0,6,0"
+                                  AutomationProperties.AutomationId="NewTotalBox"
+                                  SpinButtonPlacementMode="Hidden"
+                                  Value="{Binding NewTotal, Mode=TwoWay}" />
+                    <ui:Button Grid.Column="5" Appearance="Primary"
+                               AutomationProperties.AutomationId="AddSideIncomeButton"
+                               Content="Add"
+                               Command="{Binding AddEntryCommand}" />
+                </Grid>
+                <ui:TextBlock Margin="0,6,0,0" FontTypography="Caption"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              Text="Fill Hours + Rate OR Total directly. Both → hours × rate wins." />
+            </StackPanel>
+        </ui:Card>
+    </Grid>
+</UserControl>
