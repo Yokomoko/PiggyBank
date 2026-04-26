@@ -11,6 +11,7 @@ using PiggyBank.App.Profiles;
 using PiggyBank.App.Settings;
 using PiggyBank.App.SideIncome;
 using PiggyBank.App.Theming;
+using PiggyBank.App.Updates;
 using PiggyBank.App.Views;
 using PiggyBank.Core.Budgeting;
 using PiggyBank.Data;
@@ -74,6 +75,7 @@ public static class AppHost
         builder.Services.AddSingleton<IProfileSessionManager>(
             sp => sp.GetRequiredService<ProfileSessionManager>());
         builder.Services.AddSingleton<IThemeService, WpfUiThemeService>();
+        builder.Services.AddSingleton<UpdateService>();
         builder.Services.AddTransient<ProfilePickerWindow>();
         builder.Services.AddTransient<ProfilePickerViewModel>();
         builder.Services.AddTransient<CreateProfileWindow>();

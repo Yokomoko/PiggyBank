@@ -7,6 +7,7 @@ using PiggyBank.App.Debts;
 using PiggyBank.App.Joint;
 using PiggyBank.App.Pockets;
 using PiggyBank.App.Settings;
+using PiggyBank.App.Updates;
 using Wpf.Ui.Controls;
 
 namespace PiggyBank.App;
@@ -14,6 +15,7 @@ namespace PiggyBank.App;
 public partial class MainWindow : FluentWindow, INotifyPropertyChanged
 {
     private readonly IServiceProvider _services;
+    private readonly UpdateService _updates;
     private string _profileHeading = "";
     private string _profileColour = "#00000000";
 
@@ -34,12 +36,57 @@ public partial class MainWindow : FluentWindow, INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public MainWindow(CurrentMonthView currentMonth, IServiceProvider services)
+    public MainWindow(CurrentMonthView currentMonth, IServiceProvider services, UpdateService updates)
     {
         InitializeComponent();
         DataContext = this;
         RootContent.Content = currentMonth;
         _services = services;
+        _updates = updates;
+        _updates.UpdateReady += OnUpdateReady;
+        // Trigger the background check after the shell has rendered so
+        // first paint is never delayed by HTTP. UpdateService is itself
+        // idempotent and fail-safe; this just kicks the wheel.
+        Loaded += (_, _) => _updates.StartBackgroundCheck();
+    }
+
+    private void OnUpdateReady(object? sender, UpdateReadyEventArgs e)
+    {
+        // The event fires on a background thread; marshal back before
+        // touching any WPF surface.
+        Dispatcher.InvokeAsync(() =>
+        {
+            try
+            {
+                var version = e.Info.TargetFullRelease.Version;
+                var result = System.Windows.MessageBox.Show(
+                    $"PiggyBank {version} is ready to install.\n\n" +
+                    "Restart now to apply, or pick Later to install on your next launch.",
+                    "Update ready",
+                    System.Windows.MessageBoxButton.OKCancel,
+                    System.Windows.MessageBoxImage.Information);
+                if (result != System.Windows.MessageBoxResult.OK) return;
+
+                try
+                {
+                    e.Manager.ApplyUpdatesAndRestart(e.Info);
+                }
+                catch
+                {
+                    // ApplyUpdatesAndRestart launches the Update.exe and
+                    // exits the process; if it throws (locked file,
+                    // permissions, etc.) the user keeps the running app
+                    // and the downloaded package will install on next
+                    // launch. No further action needed here.
+                }
+            }
+            catch
+            {
+                // Last-resort: never let a broken update prompt take down
+                // the shell. The update remains downloaded and will apply
+                // on next launch via Velopack's standard flow.
+            }
+        });
     }
 
     private void OnNavCurrentMonthClicked(object sender, RoutedEventArgs e)
