@@ -30,11 +30,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Bundle the icon into the publish output so Velopack's vpk pack -i
-         flag can find it relative to the published app folder. -->
-    <None Include="..\..\assets\PiggyBank.ico"
-          CopyToOutputDirectory="PreserveNewest"
-          Link="PiggyBank.ico" />
+    <!-- Embed the icon as a WPF resource so MainWindow's
+         Icon="pack://application:,,,/PiggyBank.ico" can resolve it at
+         runtime. <None Include CopyToOutputDirectory> only puts the file
+         on disk next to the .exe — pack:// URIs need the icon to live
+         in the assembly's resource manifest, not the output folder.
+         Velopack pack reads the .ico via its -i flag from the source
+         tree, so neither path needs the file on disk separately. -->
+    <Resource Include="..\..\assets\PiggyBank.ico"
+              Link="PiggyBank.ico" />
   </ItemGroup>
 
 </Project>

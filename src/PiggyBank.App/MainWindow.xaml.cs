@@ -24,6 +24,7 @@ public partial class MainWindow : FluentWindow
         UpdateService updates)
     {
         InitializeComponent();
+        TryApplyWindowIcon();
         DataContext = shell;
         RootContent.Content = currentMonth;
         _services = services;
@@ -102,6 +103,27 @@ public partial class MainWindow : FluentWindow
     private void OnNavSideIncomeClicked(object sender, RoutedEventArgs e)
     {
         RootContent.Content = _services.GetRequiredService<PiggyBank.App.SideIncome.SideIncomeView>();
+    }
+
+    /// <summary>Loads the embedded PiggyBank.ico resource and sets it as
+    /// the window's title-bar icon. Wrapped in try/catch because a XAML
+    /// Icon attribute set to an unresolved pack URI is unrecoverable
+    /// (the whole BAML parse fails and the app crashes on startup).
+    /// Doing it programmatically lets us silently fall back to the
+    /// embedded EXE icon — which still drives the taskbar — if anything
+    /// goes wrong with the resource lookup.</summary>
+    private void TryApplyWindowIcon()
+    {
+        try
+        {
+            Icon = System.Windows.Media.Imaging.BitmapFrame.Create(
+                new Uri("pack://application:,,,/PiggyBank.ico", UriKind.Absolute));
+        }
+        catch
+        {
+            // Fall through — Window.Icon stays null, taskbar uses the
+            // EXE-embedded icon (set via <ApplicationIcon> in the csproj).
+        }
     }
 
     private void OnSettingsClicked(object sender, RoutedEventArgs e)
