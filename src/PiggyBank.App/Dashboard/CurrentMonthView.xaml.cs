@@ -107,6 +107,37 @@ public partial class CurrentMonthView : UserControl
         }
         finally { _suppressAmountTextChanged = false; }
     }
+
+    /// <summary>Per-keystroke push for the existing-row Amount fields
+    /// (outgoings list + ledger transaction list). The default WPF-UI
+    /// NumberBox only commits its Value on LostFocus, which means the
+    /// bound row's Amount stays stale while the user is typing — so the
+    /// Recalculate that hangs off PropertyChanged doesn't fire and the
+    /// surplus / running balance don't update until tab-out. Pushing
+    /// per-keystroke directly into the row makes edits feel live.</summary>
+    private void OnRowAmountTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_suppressAmountTextChanged) return;
+        if (sender is not Wpf.Ui.Controls.NumberBox box) return;
+
+        var text = box.Text;
+        var value = 0m;
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            decimal.TryParse(text, NumberStyles.Any, CultureInfo.CurrentCulture, out value);
+        }
+
+        _suppressAmountTextChanged = true;
+        try
+        {
+            switch (box.DataContext)
+            {
+                case MonthlyOutgoingRow outgoing: outgoing.Amount = value; break;
+                case TransactionRow tx:           tx.Amount       = value; break;
+            }
+        }
+        finally { _suppressAmountTextChanged = false; }
+    }
 }
 
 internal sealed class RelayKeyCommand(Action action) : ICommand

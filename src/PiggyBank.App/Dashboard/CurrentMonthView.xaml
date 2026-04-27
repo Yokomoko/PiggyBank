@@ -257,7 +257,9 @@
                                                               HorizontalContentAlignment="Right"
                                                               VerticalContentAlignment="Center"
                                                               SpinButtonPlacementMode="Hidden"
-                                                              Value="{Binding Amount, Mode=TwoWay}" />
+                                                              Value="{Binding Amount, Mode=TwoWay}"
+                                                              GotKeyboardFocus="OnAmountBoxGotFocus"
+                                                              TextChanged="OnRowAmountTextChanged" />
                                                 <ui:Button Grid.Column="3" Appearance="Transparent" ToolTip="Delete"
                                                            Command="{Binding DataContext.DeleteOutgoingCommand,
                                                                              RelativeSource={RelativeSource AncestorType=UserControl}}"
@@ -388,7 +390,9 @@
                                                           HorizontalContentAlignment="Right"
                                                           VerticalContentAlignment="Center"
                                                           SpinButtonPlacementMode="Hidden"
-                                                          Value="{Binding Amount, Mode=TwoWay}" />
+                                                          Value="{Binding Amount, Mode=TwoWay}"
+                                                          GotKeyboardFocus="OnAmountBoxGotFocus"
+                                                          TextChanged="OnRowAmountTextChanged" />
                                             <ComboBox Grid.Column="3"
                                                       BorderThickness="0" Background="Transparent"
                                                       Padding="0" Margin="0"
