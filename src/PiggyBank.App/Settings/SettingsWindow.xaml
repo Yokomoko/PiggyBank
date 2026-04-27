@@ -75,6 +75,68 @@
                 </StackPanel>
             </ui:Card>
 
+            <!-- Categories -->
+            <ui:Card Margin="0,12,0,0" Padding="16">
+                <StackPanel>
+                    <ui:TextBlock FontTypography="BodyStrong" Text="Categories" />
+                    <ui:TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  Margin="0,4,0,8"
+                                  Text="Per-profile. Add new categories used by transactions and outgoing rows. Archive hides a category from pickers without altering past tags." />
+
+                    <ItemsControl ItemsSource="{Binding Categories}"
+                                  AutomationProperties.AutomationId="CategoryList"
+                                  Margin="0,0,0,8">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="8,6" Margin="0,2"
+                                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                        BorderThickness="0,0,0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="100" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock VerticalAlignment="Center" Text="{Binding Name}" />
+                                        <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                   Text="{Binding KindLabel}" />
+                                        <ui:Button Grid.Column="2" Appearance="Transparent"
+                                                   ToolTip="Archive category"
+                                                   Command="{Binding DataContext.ArchiveCategoryCommand,
+                                                                     RelativeSource={RelativeSource AncestorType=Window}}"
+                                                   CommandParameter="{Binding}">
+                                            <ui:SymbolIcon Symbol="Archive24" FontSize="14" />
+                                        </ui:Button>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox Grid.Column="0" Margin="0,0,6,0"
+                                    AutomationProperties.AutomationId="NewCategoryNameBox"
+                                    PlaceholderText="New category name"
+                                    Text="{Binding NewCategoryName, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+                        <ComboBox Grid.Column="1" Margin="0,0,6,0"
+                                  AutomationProperties.AutomationId="NewCategoryKindCombo"
+                                  ItemsSource="{Binding CategoryKindChoices}"
+                                  SelectedItem="{Binding NewCategoryKind, Mode=TwoWay}"
+                                  DisplayMemberPath="Label" />
+                        <ui:Button Grid.Column="2" Appearance="Primary"
+                                   AutomationProperties.AutomationId="AddCategoryButton"
+                                   Content="Add"
+                                   Command="{Binding AddCategoryCommand}" />
+                    </Grid>
+                </StackPanel>
+            </ui:Card>
+
             <!-- About -->
             <ui:Card Margin="0,12,0,0" Padding="16">
                 <StackPanel>
