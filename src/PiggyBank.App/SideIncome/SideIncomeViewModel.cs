@@ -232,7 +232,10 @@ public sealed partial class SideIncomeViewModel(
         var dialog = new System.Windows.Window
         {
             Title = "Compose invoice email",
-            Width = 480, Height = 360,
+            Width = 480,
+            // Height auto-fits the StackPanel — fixed heights drift out of
+            // sync when fields move or the user runs at a non-default DPI.
+            SizeToContent = System.Windows.SizeToContent.Height,
             WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner,
             Owner = System.Windows.Application.Current.MainWindow,
             ResizeMode = System.Windows.ResizeMode.NoResize,
@@ -509,7 +512,8 @@ public sealed partial class SideIncomeViewModel(
         var dialog = new System.Windows.Window
         {
             Title = "Save template",
-            Width = 360, Height = 160,
+            Width = 360,
+            SizeToContent = System.Windows.SizeToContent.Height,
             WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner,
             Owner = System.Windows.Application.Current.MainWindow,
             ResizeMode = System.Windows.ResizeMode.NoResize,
