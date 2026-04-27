@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using PiggyBank.App.Hosting;
 using PiggyBank.App.Profiles;
 using PiggyBank.App.Settings;
+using PiggyBank.App.Shell;
 using PiggyBank.App.Views;
 using PiggyBank.Core.Entities;
 using PiggyBank.Data.Profiles;
@@ -72,11 +73,9 @@ public partial class App : Application
             }
 
             var profile = await GetProfileAsync(sessions, profileId.Value);
+            var shell = _host.Services.GetRequiredService<ShellViewModel>();
+            shell.SetActiveProfile(profile);
             var mainWindow = _host.Services.GetRequiredService<MainWindow>();
-            mainWindow.ProfileHeading = profile is null
-                ? "Welcome."
-                : $"Signed in as {profile.DisplayName}.";
-            mainWindow.ProfileColour = profile?.ColourHex ?? "#00000000";
 
             // Now that the shell is up, shut down when IT closes (not any
             // prior dialog). ShutdownMode=OnExplicitShutdown is set in

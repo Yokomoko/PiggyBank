@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using PiggyBank.App.Analytics;
@@ -7,39 +6,25 @@ using PiggyBank.App.Debts;
 using PiggyBank.App.Joint;
 using PiggyBank.App.Pockets;
 using PiggyBank.App.Settings;
+using PiggyBank.App.Shell;
 using PiggyBank.App.Updates;
 using Wpf.Ui.Controls;
 
 namespace PiggyBank.App;
 
-public partial class MainWindow : FluentWindow, INotifyPropertyChanged
+public partial class MainWindow : FluentWindow
 {
     private readonly IServiceProvider _services;
     private readonly UpdateService _updates;
-    private string _profileHeading = "";
-    private string _profileColour = "#00000000";
 
-    public string ProfileHeading
-    {
-        get => _profileHeading;
-        set { _profileHeading = value; PropertyChanged?.Invoke(this, new(nameof(ProfileHeading))); }
-    }
-
-    /// <summary>Hex string bound through <c>HexToBrushConverter</c> in XAML —
-    /// keeps the MainWindow shell free of WPF Brush types, which makes the
-    /// eventual ShellViewModel trivially portable.</summary>
-    public string ProfileColour
-    {
-        get => _profileColour;
-        set { _profileColour = value; PropertyChanged?.Invoke(this, new(nameof(ProfileColour))); }
-    }
-
-    public event PropertyChangedEventHandler? PropertyChanged;
-
-    public MainWindow(CurrentMonthView currentMonth, IServiceProvider services, UpdateService updates)
+    public MainWindow(
+        ShellViewModel shell,
+        CurrentMonthView currentMonth,
+        IServiceProvider services,
+        UpdateService updates)
     {
         InitializeComponent();
-        DataContext = this;
+        DataContext = shell;
         RootContent.Content = currentMonth;
         _services = services;
         _updates = updates;

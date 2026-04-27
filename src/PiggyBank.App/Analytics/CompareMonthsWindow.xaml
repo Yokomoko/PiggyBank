@@ -1,0 +1,190 @@
+<ui:FluentWindow x:Class="PiggyBank.App.Analytics.CompareMonthsWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 AutomationProperties.AutomationId="CompareMonthsWindow"
+                 Title="Compare months — PiggyBank"
+                 Width="960" Height="720"
+                 WindowStartupLocation="CenterOwner"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <ui:TitleBar Grid.Row="0" Title="Compare months — PiggyBank" />
+
+        <Grid Grid.Row="1" Margin="24,8,24,24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Picker -->
+            <Grid Grid.Row="0" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                    <ui:TextBlock FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  Text="LEFT (BASELINE)" />
+                    <ComboBox AutomationProperties.AutomationId="LeftMonthCombo"
+                              Margin="0,4,0,0"
+                              ItemsSource="{Binding AvailableMonths}"
+                              SelectedItem="{Binding LeftMonth, Mode=TwoWay}"
+                              DisplayMemberPath="Label" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                    <ui:TextBlock FontTypography="Caption"
+                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                  Text="RIGHT (COMPARE TO)" />
+                    <ComboBox AutomationProperties.AutomationId="RightMonthCombo"
+                              Margin="0,4,0,0"
+                              ItemsSource="{Binding AvailableMonths}"
+                              SelectedItem="{Binding RightMonth, Mode=TwoWay}"
+                              DisplayMemberPath="Label" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Headline metrics -->
+            <ui:Card Grid.Row="1" Padding="0" Margin="0,0,0,12"
+                     Visibility="{Binding HasResults, Converter={StaticResource BoolToVisibility}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ui:TextBlock Grid.Row="0" FontTypography="Subtitle"
+                                  Margin="14,12,14,8" Text="Headline" />
+                    <Border Grid.Row="1" Padding="14,6,14,6"
+                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="160" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBlock FontSize="10" FontWeight="SemiBold"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="METRIC" />
+                            <ui:TextBlock Grid.Column="1" FontSize="10" FontWeight="SemiBold"
+                                          TextAlignment="Right" Margin="0,0,12,0"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="LEFT" />
+                            <ui:TextBlock Grid.Column="2" FontSize="10" FontWeight="SemiBold"
+                                          TextAlignment="Right" Margin="0,0,12,0"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="RIGHT" />
+                            <ui:TextBlock Grid.Column="3" FontSize="10" FontWeight="SemiBold"
+                                          TextAlignment="Right" Margin="0,0,12,0"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="DELTA" />
+                        </Grid>
+                    </Border>
+                    <ItemsControl Grid.Row="2" ItemsSource="{Binding Metrics}"
+                                  AutomationProperties.AutomationId="CompareMetrics">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="14,6,14,6"
+                                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                        BorderThickness="0,0,0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="160" />
+                                            <ColumnDefinition Width="160" />
+                                            <ColumnDefinition Width="160" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock VerticalAlignment="Center" Text="{Binding Label}" />
+                                        <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                                   TextAlignment="Right" Margin="0,0,12,0"
+                                                   Text="{Binding Left}" />
+                                        <TextBlock Grid.Column="2" VerticalAlignment="Center"
+                                                   TextAlignment="Right" Margin="0,0,12,0"
+                                                   Text="{Binding Right}" />
+                                        <TextBlock Grid.Column="3" VerticalAlignment="Center"
+                                                   TextAlignment="Right" Margin="0,0,12,0"
+                                                   FontWeight="SemiBold"
+                                                   Text="{Binding Delta}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </ui:Card>
+
+            <!-- Per-category -->
+            <ui:Card Grid.Row="2" Padding="0"
+                     Visibility="{Binding HasResults, Converter={StaticResource BoolToVisibility}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <ui:TextBlock Grid.Row="0" FontTypography="Subtitle"
+                                  Margin="14,12,14,8" Text="Spend by category" />
+                    <Border Grid.Row="1" Padding="14,6,14,6"
+                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="160" />
+                                <ColumnDefinition Width="160" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBlock FontSize="10" FontWeight="SemiBold"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="CATEGORY" />
+                            <ui:TextBlock Grid.Column="1" FontSize="10" FontWeight="SemiBold"
+                                          TextAlignment="Right" Margin="0,0,12,0"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="LEFT" />
+                            <ui:TextBlock Grid.Column="2" FontSize="10" FontWeight="SemiBold"
+                                          TextAlignment="Right" Margin="0,0,12,0"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="RIGHT" />
+                            <ui:TextBlock Grid.Column="3" FontSize="10" FontWeight="SemiBold"
+                                          TextAlignment="Right" Margin="0,0,12,0"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="DELTA" />
+                        </Grid>
+                    </Border>
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Categories}"
+                                      AutomationProperties.AutomationId="CompareCategories">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="14,6,14,6"
+                                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                            BorderThickness="0,0,0,1">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="160" />
+                                                <ColumnDefinition Width="160" />
+                                                <ColumnDefinition Width="160" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock VerticalAlignment="Center" Text="{Binding Name}" />
+                                            <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                                       TextAlignment="Right" Margin="0,0,12,0"
+                                                       Text="{Binding Left}" />
+                                            <TextBlock Grid.Column="2" VerticalAlignment="Center"
+                                                       TextAlignment="Right" Margin="0,0,12,0"
+                                                       Text="{Binding Right}" />
+                                            <TextBlock Grid.Column="3" VerticalAlignment="Center"
+                                                       TextAlignment="Right" Margin="0,0,12,0"
+                                                       FontWeight="SemiBold"
+                                                       Text="{Binding Delta}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </ui:Card>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

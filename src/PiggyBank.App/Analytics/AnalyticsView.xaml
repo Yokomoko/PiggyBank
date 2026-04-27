@@ -89,8 +89,17 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <ui:TextBlock Grid.Row="0" FontTypography="Subtitle"
-                              Margin="14,12,14,8" Text="Months" />
+                <Grid Grid.Row="0" Margin="14,12,14,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock FontTypography="Subtitle" Text="Months" />
+                    <ui:Button Grid.Column="1" Appearance="Secondary"
+                               AutomationProperties.AutomationId="CompareMonthsButton"
+                               Content="Compare months..."
+                               Command="{Binding CompareMonthsCommand}" />
+                </Grid>
                 <Border Grid.Row="1" Padding="14,6,14,6"
                         BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
                         BorderThickness="0,0,0,1">

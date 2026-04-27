@@ -35,12 +35,19 @@ public sealed partial class AnalyticsViewModel(
     /// hosts the modal so the VM stays testable.</summary>
     public event EventHandler<MonthSummaryRow>? ViewMonthRequested;
 
+    /// <summary>Raised when the user clicks "Compare months" — view hosts
+    /// the modal. No payload: the dialog populates its own pickers.</summary>
+    public event EventHandler? CompareMonthsRequested;
+
     [RelayCommand]
     public void ViewMonth(MonthSummaryRow? row)
     {
         if (row is null) return;
         ViewMonthRequested?.Invoke(this, row);
     }
+
+    [RelayCommand]
+    public void CompareMonths() => CompareMonthsRequested?.Invoke(this, EventArgs.Empty);
 
     public ObservableCollection<ISeries> MonthlySpendSeries { get; } = [];
     public ObservableCollection<Axis> MonthlySpendXAxis { get; } = [];

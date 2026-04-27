@@ -23,6 +23,13 @@ public partial class AnalyticsView : UserControl
             window.ShowDialog();
         };
 
+        vm.CompareMonthsRequested += (_, _) =>
+        {
+            var window = services.GetRequiredService<CompareMonthsWindow>();
+            window.Owner = System.Windows.Application.Current.MainWindow;
+            window.ShowDialog();
+        };
+
         Loaded += async (_, _) =>
         {
             if (DataContext is AnalyticsViewModel current)

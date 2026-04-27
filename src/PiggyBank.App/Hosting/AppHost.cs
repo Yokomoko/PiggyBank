@@ -9,6 +9,7 @@ using PiggyBank.App.Joint;
 using PiggyBank.App.Pockets;
 using PiggyBank.App.Profiles;
 using PiggyBank.App.Settings;
+using PiggyBank.App.Shell;
 using PiggyBank.App.SideIncome;
 using PiggyBank.App.Theming;
 using PiggyBank.App.Updates;
@@ -76,6 +77,7 @@ public static class AppHost
             sp => sp.GetRequiredService<ProfileSessionManager>());
         builder.Services.AddSingleton<IThemeService, WpfUiThemeService>();
         builder.Services.AddSingleton<UpdateService>();
+        builder.Services.AddSingleton<ShellViewModel>();
         builder.Services.AddTransient<ProfilePickerWindow>();
         builder.Services.AddTransient<ProfilePickerViewModel>();
         builder.Services.AddTransient<CreateProfileWindow>();
@@ -86,6 +88,8 @@ public static class AppHost
         builder.Services.AddTransient<AnalyticsViewModel>();
         builder.Services.AddTransient<PastMonthWindow>();
         builder.Services.AddTransient<PastMonthViewModel>();
+        builder.Services.AddTransient<CompareMonthsWindow>();
+        builder.Services.AddTransient<CompareMonthsViewModel>();
         builder.Services.AddTransient<DebtsView>();
         builder.Services.AddTransient<DebtsViewModel>();
         builder.Services.AddTransient<PocketsView>();
