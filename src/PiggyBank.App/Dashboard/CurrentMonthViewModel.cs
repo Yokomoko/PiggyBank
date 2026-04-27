@@ -386,6 +386,14 @@ public sealed partial class CurrentMonthViewModel(
         foreach (var c in all) AvailableCategories.Add(c);
     }
 
+    /// <summary>Public refresh hook for <see cref="CategoryChangeNotifier"/>:
+    /// fired when the Settings dialog adds or archives a category, so the
+    /// in-progress Current Month view's dropdowns pick up the change without
+    /// the user having to navigate away and back.</summary>
+    [RelayCommand]
+    public async Task RefreshCategoriesAsync(CancellationToken ct = default)
+        => await RefreshLedgerCategoriesAsync(ct);
+
     private bool CanAddOutgoing() =>
         Month is not null && !string.IsNullOrWhiteSpace(NewOutgoingName) && NewOutgoingAmount != 0m;
 

@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Microsoft.Extensions.DependencyInjection;
+using PiggyBank.App.Notifications;
 using PiggyBank.App.Pockets;
 
 namespace PiggyBank.App.Dashboard;
@@ -25,11 +26,26 @@ public partial class CurrentMonthView : UserControl
     public CurrentMonthView(CurrentMonthViewModel vm, IServiceProvider services) : this()
     {
         DataContext = vm;
+        var categoryNotifier = services.GetRequiredService<CategoryChangeNotifier>();
+
+        // Subscribe in Loaded / unsubscribe in Unloaded so transient view
+        // instances don't leak — the notifier is a singleton, so a stale
+        // reference here would keep the whole VM graph alive after the
+        // user navigates to another tab.
+        EventHandler categoryHandler = async (_, _) =>
+        {
+            if (DataContext is CurrentMonthViewModel current)
+                await current.RefreshCategoriesCommand.ExecuteAsync(null);
+        };
+
         Loaded += async (_, _) =>
         {
             if (DataContext is CurrentMonthViewModel current)
                 await current.LoadCommand.ExecuteAsync(null);
+            categoryNotifier.Changed += categoryHandler;
         };
+
+        Unloaded += (_, _) => categoryNotifier.Changed -= categoryHandler;
 
         vm.RecordSavingsRequested += async (_, amount) =>
         {
@@ -47,6 +63,21 @@ public partial class CurrentMonthView : UserControl
         InputBindings.Add(new KeyBinding(
             new RelayKeyCommand(() => QuickAddPayeeBox.Focus()),
             new KeyGesture(Key.N, ModifierKeys.Control)));
+    }
+
+    /// <summary>Selects all text in the NumberBox when it gains keyboard
+    /// focus — so tabbing into the Amount box (which holds a placeholder
+    /// "0") lets the user type the amount directly without first deleting.
+    /// Wired on the underlying TextBox via the GotKeyboardFocus event so
+    /// it survives both tab-in and click-in.</summary>
+    private void OnAmountBoxGotFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Wpf.Ui.Controls.NumberBox box) return;
+        // The NumberBox hosts a TextBox internally; SelectAll on the box
+        // dispatcher-delays so the framework's focus-set logic doesn't
+        // immediately reset the selection on entry.
+        box.Dispatcher.BeginInvoke(new Action(box.SelectAll),
+            System.Windows.Threading.DispatcherPriority.Input);
     }
 
     /// <summary>Per-keystroke push: parses the NumberBox text and writes it

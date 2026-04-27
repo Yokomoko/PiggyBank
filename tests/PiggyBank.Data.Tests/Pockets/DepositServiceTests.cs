@@ -134,6 +134,47 @@ public sealed class DepositServiceTests
         result.Unallocated.Should().Be(0m);
     }
 
+    /// <summary>Regression for the user-reported "£63.50 in, £63.52 out"
+    /// rounding drift on 2026-04-27. Naive per-pocket round-half-away
+    /// rounded both 15.875 → 15.88 and 3.175 → 3.18 (×2), pushing the
+    /// total 2p over the deposit. Largest-remainder apportionment must
+    /// keep the sum exactly equal to the deposit even when several
+    /// pockets land on the half-penny boundary.</summary>
+    [Fact]
+    public async Task RecordAsync_distributes_exactly_when_percentages_force_rounding()
+    {
+        using var db = TestDb.CreateAdmin();
+        await SeedProfile(db);
+        var pocketRepo = new PocketRepository(db.Context, Clock);
+        var depositRepo = new DepositRepository(db.Context);
+        var svc = new DepositService(db.Context, pocketRepo, depositRepo, Clock);
+
+        // 25 + 15 + 10 + 10 + 30 + 5 + 5 = 100
+        await pocketRepo.AddAsync(new Pocket { Name = "Christmas",  CurrentBalance = 0m, AutoSavePercent = 25m });
+        await pocketRepo.AddAsync(new Pocket { Name = "Buffer",     CurrentBalance = 0m, AutoSavePercent = 15m });
+        await pocketRepo.AddAsync(new Pocket { Name = "Tech",       CurrentBalance = 0m, AutoSavePercent = 10m });
+        await pocketRepo.AddAsync(new Pocket { Name = "Mortgage OP",CurrentBalance = 0m, AutoSavePercent = 10m });
+        await pocketRepo.AddAsync(new Pocket { Name = "Holiday",    CurrentBalance = 0m, AutoSavePercent = 30m });
+        await pocketRepo.AddAsync(new Pocket { Name = "SIPP A",     CurrentBalance = 0m, AutoSavePercent = 5m });
+        await pocketRepo.AddAsync(new Pocket { Name = "SIPP B",     CurrentBalance = 0m, AutoSavePercent = 5m });
+
+        var result = await svc.RecordAsync(new DateOnly(2026, 4, 24), 63.50m);
+
+        // The cardinal property: total distributed equals the deposit.
+        result.Allocations.Sum(a => a.Amount).Should().Be(63.50m);
+        result.Unallocated.Should().Be(0m);
+
+        // Every individual share is within 1p of its mathematical exact
+        // proportional value — apportionment never pushes a pocket more
+        // than one penny away from its fair share.
+        foreach (var a in result.Allocations)
+        {
+            var pocket = (await pocketRepo.ListAsync()).Single(p => p.Id == a.PocketId);
+            var exact = 63.50m * (pocket.AutoSavePercent / 100m);
+            Math.Abs(a.Amount - exact).Should().BeLessThanOrEqualTo(0.01m);
+        }
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-5)]

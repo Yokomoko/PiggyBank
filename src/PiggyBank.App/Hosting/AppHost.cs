@@ -7,6 +7,7 @@ using PiggyBank.App.Dashboard;
 using PiggyBank.App.Debts;
 using PiggyBank.App.Joint;
 using PiggyBank.App.Pockets;
+using PiggyBank.App.Notifications;
 using PiggyBank.App.Profiles;
 using PiggyBank.App.Settings;
 using PiggyBank.App.Shell;
@@ -85,6 +86,7 @@ public static class AppHost
         builder.Services.AddSingleton<IThemeService, WpfUiThemeService>();
         builder.Services.AddSingleton<UpdateService>();
         builder.Services.AddSingleton<ShellViewModel>();
+        builder.Services.AddSingleton<CategoryChangeNotifier>();
         builder.Services.AddTransient<ProfilePickerWindow>();
         builder.Services.AddTransient<ProfilePickerViewModel>();
         builder.Services.AddTransient<CreateProfileWindow>();

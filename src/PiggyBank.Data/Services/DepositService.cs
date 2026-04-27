@@ -45,32 +45,78 @@ public sealed class DepositService(
         }, ct);
 
         var activePockets = await pockets.ListAsync(ct: ct);
-        var allocations = new List<DepositAllocation>(activePockets.Count);
+
+        // Pockets that participate in this distribution: positive autosave
+        // and either no goal or below it. The goal-pause is intentional — a
+        // pocket that's already hit its target shouldn't overflow; its
+        // share stays unallocated until the balance drops back below.
+        var participating = activePockets
+            .Where(p => p.AutoSavePercent > 0m
+                     && !(p.Goal is > 0m && p.CurrentBalance >= p.Goal))
+            .ToList();
+
+        // Largest-remainder apportionment so the rounded shares sum
+        // exactly to the proportional share of the deposit. Per-pocket
+        // round-half-away naively (the previous approach) drifts up to
+        // half a penny per pocket and compounds — a 7-pocket 100%
+        // split of £63.50 came out to £63.52 in production. The fix:
+        //   1. Floor each exact share to 2 decimal places.
+        //   2. Compute the integer-penny shortfall vs the target total.
+        //   3. Hand out the missing pennies, one each, to the pockets
+        //      with the largest fractional remainder (apportionment
+        //      maths: Hamilton method).
+        var targetTotal = Math.Round(
+            amount * (participating.Sum(p => p.AutoSavePercent) / 100m),
+            2, MidpointRounding.AwayFromZero);
+
+        var entries = participating
+            .Select(p =>
+            {
+                var exact = amount * (p.AutoSavePercent / 100m);
+                var floor = Math.Floor(exact * 100m) / 100m;
+                return new
+                {
+                    Pocket = p,
+                    Floor = floor,
+                    Remainder = exact - floor,
+                };
+            })
+            .ToList();
+
+        var floorSum = entries.Sum(e => e.Floor);
+        var pennyDeficit = (int)Math.Round((targetTotal - floorSum) * 100m);
+
+        // Stable tie-break by SortOrder then by original index so the same
+        // input always produces the same output (no flaky tests, no
+        // user-visible "why does the same deposit allocate differently
+        // each time" surprise).
+        var ranked = entries
+            .Select((e, i) => new { Entry = e, Index = i })
+            .OrderByDescending(x => x.Entry.Remainder)
+            .ThenBy(x => x.Entry.Pocket.SortOrder)
+            .ThenBy(x => x.Index)
+            .ToList();
+
+        var bonusByPocket = new Dictionary<Guid, decimal>(entries.Count);
+        for (int i = 0; i < ranked.Count; i++)
+            bonusByPocket[ranked[i].Entry.Pocket.Id] = i < pennyDeficit ? 0.01m : 0m;
+
+        var allocations = new List<DepositAllocation>(participating.Count);
         var distributed = 0m;
-        foreach (var pocket in activePockets)
+        foreach (var entry in entries)
         {
-            if (pocket.AutoSavePercent <= 0m) continue;
-            // Pause autosave on goal-reached pockets. The user's autosave %
-            // stays untouched in the DB so if they later withdraw from the
-            // pocket (balance drops below goal) it naturally re-engages.
-            // The effect is that this pocket's share goes unallocated rather
-            // than overflowing past the goal.
-            if (pocket.Goal is > 0m && pocket.CurrentBalance >= pocket.Goal) continue;
-            var share = Math.Round(
-                amount * (pocket.AutoSavePercent / 100m),
-                2,
-                MidpointRounding.AwayFromZero);
+            var share = entry.Floor + bonusByPocket[entry.Pocket.Id];
             if (share == 0m) continue;
 
             allocations.Add(new DepositAllocation
             {
                 DepositId = deposit.Id,
-                PocketId = pocket.Id,
-                AutoSavePercentAtDeposit = pocket.AutoSavePercent,
+                PocketId = entry.Pocket.Id,
+                AutoSavePercentAtDeposit = entry.Pocket.AutoSavePercent,
                 Amount = share,
             });
-            pocket.CurrentBalance += share;
-            await pockets.UpdateAsync(pocket, ct);
+            entry.Pocket.CurrentBalance += share;
+            await pockets.UpdateAsync(entry.Pocket, ct);
             distributed += share;
         }
 

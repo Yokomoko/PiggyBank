@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using PiggyBank.App.Notifications;
 using PiggyBank.App.Profiles;
 using PiggyBank.Core.Entities;
 using PiggyBank.Data;
@@ -12,9 +13,12 @@ using PiggyBank.Data.Repositories;
 
 namespace PiggyBank.App.Settings;
 
-public sealed partial class SettingsViewModel(IProfileSessionManager sessions) : ObservableObject
+public sealed partial class SettingsViewModel(
+    IProfileSessionManager sessions,
+    CategoryChangeNotifier categoryNotifier) : ObservableObject
 {
     private readonly IProfileSessionManager _sessions = sessions;
+    private readonly CategoryChangeNotifier _categoryNotifier = categoryNotifier;
     private AppSettings? _systemSettings;
     private ProfileSettings? _profileSettings;
 
@@ -96,6 +100,7 @@ public sealed partial class SettingsViewModel(IProfileSessionManager sessions) :
         NewCategoryName = "";
         NewCategoryKind = CategoryKindChoices[0];
         await ReloadCategoriesAsync(ct);
+        _categoryNotifier.Notify();
         StatusMessage = $"Added \"{name}\".";
     }
 
@@ -115,6 +120,7 @@ public sealed partial class SettingsViewModel(IProfileSessionManager sessions) :
         var repo = _sessions.Current.Services.GetRequiredService<ICategoryRepository>();
         await repo.ArchiveAsync(row.Id, ct);
         await ReloadCategoriesAsync(ct);
+        _categoryNotifier.Notify();
         StatusMessage = $"Archived \"{row.Name}\".";
     }
 
