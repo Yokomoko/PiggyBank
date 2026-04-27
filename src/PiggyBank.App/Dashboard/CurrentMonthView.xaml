@@ -62,7 +62,8 @@
                         Margin="0,0,12,0"
                         Visibility="{Binding NeedsMonthCreated, Converter={StaticResource InverseBoolToVisibility}}">
                 <Border Padding="10,6" Margin="0,0,8,0" CornerRadius="6"
-                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                        Background="{DynamicResource ControlFillColorDefaultBrush}"
+                        ToolTip="Your monthly salary for this pay cycle. Click the eye icon on the right to mask it for shoulder-surf privacy.">
                     <StackPanel>
                         <ui:TextBlock FontSize="10" FontWeight="SemiBold"
                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
@@ -73,7 +74,8 @@
                     </StackPanel>
                 </Border>
                 <Border Padding="10,6" Margin="0,0,8,0" CornerRadius="6"
-                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                        Background="{DynamicResource ControlFillColorDefaultBrush}"
+                        ToolTip="Trend extrapolation: today's spend-per-day rate × days remaining, compared with your sustainable daily budget.&#10;&#10;Negative trend (shortfall) means at this pace you'll overspend the budget — even if Running balance still looks healthy. Positive trend (savings) means you're tracking under and the unspent amount is what you'd land with at next payday.&#10;&#10;Different from Running balance: that's actual cash left right now; this is the projection of what's coming.">
                     <StackPanel>
                         <ui:TextBlock FontSize="10" FontWeight="SemiBold"
                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
@@ -92,7 +94,8 @@
                     </StackPanel>
                 </Border>
                 <Border Padding="10,6" Margin="0,0,8,0" CornerRadius="6"
-                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                        Background="{DynamicResource ControlFillColorDefaultBrush}"
+                        ToolTip="Sustainable daily spend for the rest of the month. Stay under this number each day to land on-budget by next payday.&#10;&#10;Computed from Running balance ÷ days remaining, minus the per-day buffer set in Settings.">
                     <StackPanel>
                         <ui:TextBlock FontSize="10" FontWeight="SemiBold"
                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
@@ -103,7 +106,8 @@
                     </StackPanel>
                 </Border>
                 <Border Padding="10,6" CornerRadius="6"
-                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                        Background="{DynamicResource ControlFillColorDefaultBrush}"
+                        ToolTip="Cash actually left in this pay cycle right now.&#10;&#10;Salary + outgoings (signed) − spending so far + carried-over balance.&#10;&#10;If you stopped spending today, this is what you'd finish the cycle with. Compare with Projected savings/shortfall — that's the trend, this is the snapshot.">
                     <StackPanel>
                         <ui:TextBlock FontSize="10" FontWeight="SemiBold"
                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
