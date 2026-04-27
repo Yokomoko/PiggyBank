@@ -31,9 +31,15 @@ public sealed partial class DebtsViewModel(
 
     // --- Payoff simulator ---
     [ObservableProperty] private decimal _extraMonthly;
-    [ObservableProperty] private string _baselineSummary = "";
-    [ObservableProperty] private string _avalancheSummary = "Enter an extra monthly amount to simulate.";
+    [ObservableProperty] private string _baselineSummary = "Add a debt to see the simulator.";
+    [ObservableProperty] private string _avalancheSummary = "";
     [ObservableProperty] private string _snowballSummary = "";
+    [ObservableProperty] private string _avalancheDelta = "";
+    [ObservableProperty] private string _snowballDelta = "";
+    [ObservableProperty] private string _avalancheOrder = "";
+    [ObservableProperty] private string _snowballOrder = "";
+    [ObservableProperty] private bool _avalancheRecommended;
+    [ObservableProperty] private bool _snowballRecommended;
     [ObservableProperty] private bool _hasSimulation;
 
     // --- Add-debt form ---
@@ -78,6 +84,10 @@ public sealed partial class DebtsViewModel(
 
             HasDebts = Debts.Count > 0;
             Recalculate();
+            // Run the sim on load so the cards show numbers as soon as the
+            // user lands on Debts. Auto-recompute then keeps them current
+            // through every inline edit.
+            RunSimulation();
         }
         finally { IsBusy = false; }
     }
@@ -182,7 +192,24 @@ public sealed partial class DebtsViewModel(
             await HandleBalanceEditAsync(row);
         }
         Recalculate();
+        // Any input that affects the simulation re-runs it. Keeps the
+        // summary cards honest after an inline edit instead of waiting
+        // on the user to click Run again.
+        if (e.PropertyName is nameof(DebtRow.AprPercent)
+                           or nameof(DebtRow.MinimumPayment)
+                           or nameof(DebtRow.ScheduledOverpayment)
+                           or nameof(DebtRow.OverpaymentPenaltyDays)
+                           or nameof(DebtRow.BalanceInput)
+                           or nameof(DebtRow.LatestBalance))
+        {
+            RunSimulation();
+        }
     }
+
+    /// <summary>Re-run the simulator when the user edits the global
+    /// Extra Monthly field. Same logic as per-row edits — keep the cards
+    /// in sync without a button click.</summary>
+    partial void OnExtraMonthlyChanged(decimal value) => RunSimulation();
 
     /// <summary>Turn the row's BalanceInput into a new snapshot. Zero prompts
     /// for confirmation because "paid off" is a meaningful product event;
@@ -253,9 +280,15 @@ public sealed partial class DebtsViewModel(
 
         if (inputs.Count == 0)
         {
-            BaselineSummary = "";
-            AvalancheSummary = "No short-term debts with a balance — nothing to simulate.";
+            BaselineSummary = "No short-term debts with a balance — nothing to simulate.";
+            AvalancheSummary = "";
             SnowballSummary = "";
+            AvalancheDelta = "";
+            SnowballDelta = "";
+            AvalancheOrder = "";
+            SnowballOrder = "";
+            AvalancheRecommended = false;
+            SnowballRecommended = false;
             HasSimulation = false;
             return;
         }
@@ -276,6 +309,38 @@ public sealed partial class DebtsViewModel(
         BaselineSummary = FormatPlan(baseline);
         AvalancheSummary = FormatPlan(avalanche);
         SnowballSummary = FormatPlan(snowball);
+        AvalancheDelta = FormatDelta(baseline, avalanche);
+        SnowballDelta = FormatDelta(baseline, snowball);
+
+        // Priority order: top 3 debts by each strategy's rule. Avalanche
+        // ranks by APR descending; snowball ranks by balance ascending.
+        // Same input set the simulator used so the labels match what the
+        // sim actually attacks.
+        AvalancheOrder = FormatPriority(inputs.OrderByDescending(d => d.AprFraction));
+        SnowballOrder = FormatPriority(inputs.OrderBy(d => d.Balance));
+
+        // Recommended = clears in fewer months OR (tie) less total interest.
+        // When they tie completely (e.g. one debt only) neither gets the
+        // badge — the user picks based on their own preference.
+        if (avalanche.MonthsToClear < snowball.MonthsToClear
+            || (avalanche.MonthsToClear == snowball.MonthsToClear
+                && avalanche.TotalInterestPaid < snowball.TotalInterestPaid))
+        {
+            AvalancheRecommended = true;
+            SnowballRecommended = false;
+        }
+        else if (snowball.MonthsToClear < avalanche.MonthsToClear
+                 || snowball.TotalInterestPaid < avalanche.TotalInterestPaid)
+        {
+            AvalancheRecommended = false;
+            SnowballRecommended = true;
+        }
+        else
+        {
+            AvalancheRecommended = false;
+            SnowballRecommended = false;
+        }
+
         HasSimulation = true;
     }
 
@@ -283,10 +348,36 @@ public sealed partial class DebtsViewModel(
     {
         if (plan.MonthsToClear >= PiggyBank.Core.Budgeting.DebtPayoffSimulator.MaxMonths)
             return "Won't clear within 50 years — increase the extra monthly.";
-        var years = plan.MonthsToClear / 12;
-        var months = plan.MonthsToClear % 12;
-        var span = years > 0 ? $"{years}y {months}m" : $"{months}m";
-        return $"Clears in {span} · interest paid £{plan.TotalInterestPaid:N2}";
+        return $"{Span(plan.MonthsToClear)} to clear · £{plan.TotalInterestPaid:N2} interest";
+    }
+
+    /// <summary>"saves £X + Yy Zm vs baseline" suffix — the headline value
+    /// of overpaying. Empty when baseline didn't clear (the saving is
+    /// "you finish ever" which doesn't render as money).</summary>
+    private static string FormatDelta(
+        PiggyBank.Core.Budgeting.DebtPayoffPlan baseline,
+        PiggyBank.Core.Budgeting.DebtPayoffPlan strategy)
+    {
+        var max = PiggyBank.Core.Budgeting.DebtPayoffSimulator.MaxMonths;
+        if (baseline.MonthsToClear >= max || strategy.MonthsToClear >= max) return "";
+        var monthsSaved = baseline.MonthsToClear - strategy.MonthsToClear;
+        var interestSaved = baseline.TotalInterestPaid - strategy.TotalInterestPaid;
+        if (monthsSaved <= 0 && interestSaved <= 0m) return "";
+        return $"saves £{interestSaved:N2} + {Span(monthsSaved)} vs baseline";
+    }
+
+    private static string FormatPriority(IEnumerable<PiggyBank.Core.Budgeting.PayoffDebt> ordered)
+    {
+        var top = ordered.Take(3).Select(d => d.Name).ToArray();
+        if (top.Length == 0) return "";
+        return "target order: " + string.Join(" → ", top);
+    }
+
+    private static string Span(int months)
+    {
+        var years = months / 12;
+        var rem = months % 12;
+        return years > 0 ? $"{years}y {rem}m" : $"{rem}m";
     }
 
     private void Recalculate()

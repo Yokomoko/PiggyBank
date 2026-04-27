@@ -99,8 +99,11 @@
                                   SpinButtonPlacementMode="Hidden"
                                   PlaceholderText="e.g. 200"
                                   Value="{Binding ExtraMonthly, Mode=TwoWay}" />
-                    <ui:Button Grid.Column="2" Margin="8,0,0,0" Appearance="Primary"
-                               Content="Run simulation"
+                    <!-- Run-button kept as a fallback / explicit refresh affordance,
+                         but cards live-update on every inline edit and on every
+                         change to Extra Monthly. -->
+                    <ui:Button Grid.Column="2" Margin="8,0,0,0" Appearance="Secondary"
+                               Content="Refresh"
                                AutomationProperties.AutomationId="RunSimulationButton"
                                Command="{Binding RunSimulationCommand}" />
                 </Grid>
@@ -111,37 +114,81 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
+                    <!-- Baseline -->
                     <Border Grid.Column="0" Padding="10,6" Margin="0,0,6,0" CornerRadius="6"
                             Background="{DynamicResource ControlFillColorDefaultBrush}">
                         <StackPanel>
                             <ui:TextBlock FontSize="10" FontWeight="SemiBold"
                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                          Text="BASELINE · minimums only, no overpay" />
+                                          Text="BASELINE · minimums only" />
                             <ui:TextBlock Margin="0,2,0,0" Text="{Binding BaselineSummary}" />
+                            <ui:TextBlock FontTypography="Caption" Margin="0,4,0,0"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                          Text="What you'd pay with no extra effort." />
                         </StackPanel>
                     </Border>
+                    <!-- Avalanche -->
                     <Border Grid.Column="1" Padding="10,6" Margin="6,0,6,0" CornerRadius="6"
                             Background="{DynamicResource ControlFillColorDefaultBrush}">
                         <StackPanel>
-                            <ui:TextBlock FontSize="10" FontWeight="SemiBold"
-                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                          Text="AVALANCHE · highest APR first" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBlock FontSize="10" FontWeight="SemiBold"
+                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                              Text="AVALANCHE · highest APR first" />
+                                <Border Grid.Column="1" Padding="6,1" CornerRadius="4"
+                                        Background="{DynamicResource SystemAccentColorPrimaryBrush}"
+                                        Visibility="{Binding AvalancheRecommended, Converter={StaticResource BoolToVisibility}}">
+                                    <ui:TextBlock FontSize="9" FontWeight="SemiBold"
+                                                  Foreground="White" Text="RECOMMENDED" />
+                                </Border>
+                            </Grid>
                             <ui:TextBlock Margin="0,2,0,0" Text="{Binding AvalancheSummary}" />
+                            <ui:TextBlock FontTypography="Caption" Margin="0,2,0,0"
+                                          Foreground="{DynamicResource SystemAccentColorBrush}"
+                                          Text="{Binding AvalancheDelta}" />
+                            <ui:TextBlock FontTypography="Caption" Margin="0,2,0,0"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                          TextWrapping="Wrap"
+                                          Text="{Binding AvalancheOrder}" />
                         </StackPanel>
                     </Border>
+                    <!-- Snowball -->
                     <Border Grid.Column="2" Padding="10,6" Margin="6,0,0,0" CornerRadius="6"
                             Background="{DynamicResource ControlFillColorDefaultBrush}">
                         <StackPanel>
-                            <ui:TextBlock FontSize="10" FontWeight="SemiBold"
-                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                          Text="SNOWBALL · smallest balance first" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBlock FontSize="10" FontWeight="SemiBold"
+                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                              Text="SNOWBALL · smallest balance first" />
+                                <Border Grid.Column="1" Padding="6,1" CornerRadius="4"
+                                        Background="{DynamicResource SystemAccentColorPrimaryBrush}"
+                                        Visibility="{Binding SnowballRecommended, Converter={StaticResource BoolToVisibility}}">
+                                    <ui:TextBlock FontSize="9" FontWeight="SemiBold"
+                                                  Foreground="White" Text="RECOMMENDED" />
+                                </Border>
+                            </Grid>
                             <ui:TextBlock Margin="0,2,0,0" Text="{Binding SnowballSummary}" />
+                            <ui:TextBlock FontTypography="Caption" Margin="0,2,0,0"
+                                          Foreground="{DynamicResource SystemAccentColorBrush}"
+                                          Text="{Binding SnowballDelta}" />
+                            <ui:TextBlock FontTypography="Caption" Margin="0,2,0,0"
+                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                          TextWrapping="Wrap"
+                                          Text="{Binding SnowballOrder}" />
                         </StackPanel>
                     </Border>
                 </Grid>
                 <ui:TextBlock Margin="0,8,0,0" FontTypography="Caption"
                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                              Text="{Binding AvalancheSummary}"
+                              Text="{Binding BaselineSummary}"
                               Visibility="{Binding HasSimulation, Converter={StaticResource InverseBoolToVisibility}}" />
             </StackPanel>
         </ui:Card>
