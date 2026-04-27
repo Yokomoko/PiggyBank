@@ -8,7 +8,8 @@
                  Width="1280" Height="800"
                  WindowStartupLocation="CenterScreen"
                  ExtendsContentIntoTitleBar="True"
-                 WindowBackdropType="Mica">
+                 WindowBackdropType="Mica"
+                 Icon="pack://application:,,,/PiggyBank.ico">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

@@ -166,12 +166,21 @@ public sealed class DepositServiceTests
 
         // Every individual share is within 1p of its mathematical exact
         // proportional value — apportionment never pushes a pocket more
-        // than one penny away from its fair share.
+        // than one penny away from its fair share — AND the pocket's
+        // CurrentBalance was actually persisted to that share. The
+        // separate balance-persisted check guards against a regression
+        // where one pocket's UpdateAsync silently no-ops while peers
+        // update fine.
+        var allPockets = await pocketRepo.ListAsync();
         foreach (var a in result.Allocations)
         {
-            var pocket = (await pocketRepo.ListAsync()).Single(p => p.Id == a.PocketId);
+            var pocket = allPockets.Single(p => p.Id == a.PocketId);
             var exact = 63.50m * (pocket.AutoSavePercent / 100m);
             Math.Abs(a.Amount - exact).Should().BeLessThanOrEqualTo(0.01m);
+
+            // Started at 0; should now equal the allocated share.
+            pocket.CurrentBalance.Should().Be(a.Amount,
+                $"pocket \"{pocket.Name}\" should have its allocation persisted");
         }
     }
 

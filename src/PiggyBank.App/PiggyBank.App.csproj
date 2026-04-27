@@ -22,6 +22,19 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <!-- Embedded EXE icon: drives the taskbar icon, the Add/Remove
+         Programs entry, and the default WPF window icon. Regenerate
+         via tools/Build-Icon.ps1 from the repo root if you swap the
+         design. -->
+    <ApplicationIcon>..\..\assets\PiggyBank.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Bundle the icon into the publish output so Velopack's vpk pack -i
+         flag can find it relative to the published app folder. -->
+    <None Include="..\..\assets\PiggyBank.ico"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="PiggyBank.ico" />
+  </ItemGroup>
 
 </Project>

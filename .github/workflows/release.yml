@@ -76,6 +76,7 @@ jobs:
           -v ${{ steps.ver.outputs.version }}
           -p publish/PiggyBank
           -e PiggyBank.App.exe
+          -i assets/PiggyBank.ico
           -o Releases
 
       - name: Create GitHub Release + upload assets
