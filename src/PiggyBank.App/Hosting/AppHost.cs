@@ -28,33 +28,40 @@ public static class AppHost
 {
     public static IHost Build()
     {
-        // E2E tests and portability: respect PIGGYBANK_DATA_ROOT if set, so
-        // an isolated DB can be used per test run. Production launches put
-        // the data in a Data/ subfolder of %LocalAppData%\PiggyBank so it
-        // doesn't collide with Velopack's install layout (current/, packages/).
-        // Without the subfolder, Velopack sees the bare app.db at the install
-        // root and reports "PiggyBank is already installed" on first run.
+        // E2E tests and portability: PIGGYBANK_DATA_ROOT overrides the
+        // production path so an isolated DB can be used per test run.
+        //
+        // Production data lives in %LocalAppData%\PiggyBankData\ — a SIBLING
+        // of the Velopack install root (%LocalAppData%\PiggyBank\), not a
+        // subfolder. Velopack treats its install root as its own and wipes
+        // everything inside it during in-place upgrades, so any data
+        // subfolder we leave there gets nuked on the next setup.exe. Living
+        // outside that tree is the only safe place for user data.
+        //
+        // Layout history (each release migrates forward on first launch):
+        //   v0.1.0:        %LocalAppData%\PiggyBank\app.db (collided with Velopack)
+        //   v0.1.1-v0.2.1: %LocalAppData%\PiggyBank\Data\app.db (still inside Velopack root — wiped on upgrade)
+        //   v0.2.2+:       %LocalAppData%\PiggyBankData\app.db (safe).
         var envRoot = Environment.GetEnvironmentVariable("PIGGYBANK_DATA_ROOT");
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var dataDir = !string.IsNullOrWhiteSpace(envRoot)
             ? envRoot
-            : Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "PiggyBank",
-                "Data");
+            : Path.Combine(localAppData, "PiggyBankData");
         Directory.CreateDirectory(dataDir);
-
-        // One-shot migration: if a legacy app.db lives at the parent dir
-        // (pre-Data/ subfolder layout), move it before opening the new path.
-        // Saves users hand-copying their database after the v0.1.0 -> v0.1.1 update.
-        var legacyDbPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "PiggyBank", "app.db");
         var newDbPath = Path.Combine(dataDir, "app.db");
-        if (string.IsNullOrWhiteSpace(envRoot)
-            && File.Exists(legacyDbPath)
-            && !File.Exists(newDbPath))
+
+        // One-shot migrations from older layouts. Only attempt when the new
+        // location is empty — once the user is on the safe path we never
+        // fall back to the wipe-prone ones.
+        if (string.IsNullOrWhiteSpace(envRoot) && !File.Exists(newDbPath))
         {
-            File.Move(legacyDbPath, newDbPath);
+            var legacyDataFolder = Path.Combine(localAppData, "PiggyBank", "Data", "app.db");
+            var legacyRoot = Path.Combine(localAppData, "PiggyBank", "app.db");
+            var source = File.Exists(legacyDataFolder) ? legacyDataFolder
+                       : File.Exists(legacyRoot) ? legacyRoot
+                       : null;
+            if (source is not null)
+                MoveDbWithSidecars(source, newDbPath);
         }
 
         var connectionString = $"Data Source={newDbPath};Foreign Keys=True;";
@@ -109,5 +116,20 @@ public static class AppHost
         builder.Services.AddTransient<MainWindow>();
 
         return builder.Build();
+    }
+
+    /// <summary>Moves an SQLite database file plus its WAL/SHM sidecars
+    /// from the legacy location to the new location. Without bringing the
+    /// sidecars along SQLite would treat the move as a partial recovery
+    /// scenario and the user could lose recent committed transactions
+    /// that hadn't yet checkpointed back into the main file.</summary>
+    private static void MoveDbWithSidecars(string from, string to)
+    {
+        File.Move(from, to);
+        foreach (var sidecar in new[] { "-shm", "-wal" })
+        {
+            var src = from + sidecar;
+            if (File.Exists(src)) File.Move(src, to + sidecar);
+        }
     }
 }

@@ -178,9 +178,13 @@ public partial class App : Application
         // even if the logger isn't wired yet (startup-path failures).
         try
         {
+            // Logs live alongside the DB in %LocalAppData%\PiggyBankData\
+            // — outside the Velopack install root so an upgrade never
+            // wipes them. Crash artefacts surviving an upgrade is the
+            // whole point of writing them to disk in the first place.
             var dir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "PiggyBank", "Logs");
+                "PiggyBankData", "Logs");
             Directory.CreateDirectory(dir);
             var file = Path.Combine(dir, $"crash-{DateTime.UtcNow:yyyyMMdd-HHmmss}.txt");
             File.WriteAllText(file, $"{headline}\n\n{ex}");
@@ -188,7 +192,7 @@ public partial class App : Application
         catch { /* last-resort, swallow */ }
 
         MessageBox.Show(
-            $"{headline}\n\n{ex.Message}\n\nSee %LocalAppData%\\PiggyBank\\Logs for details.",
+            $"{headline}\n\n{ex.Message}\n\nSee %LocalAppData%\\PiggyBankData\\Logs for details.",
             "PiggyBank — error",
             MessageBoxButton.OK,
             MessageBoxImage.Error);

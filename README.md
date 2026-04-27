@@ -39,7 +39,7 @@ A local-first Windows desktop app for personal finance: payday-cycle budgeting, 
 
 Grab the latest `setup.exe` from [Releases](https://github.com/Yokomoko/PiggyBank/releases) and run it. Installs to `%LocalAppData%\PiggyBank\` and needs no admin rights. Velopack handles delta auto-updates from the same source.
 
-Data lives at `%LocalAppData%\PiggyBank\Data\app.db` (SQLite). Back it up by copying the `Data\` folder; restore by replacing it.
+Data lives at `%LocalAppData%\PiggyBankData\app.db` (SQLite). Back it up by copying the `PiggyBankData\` folder; restore by replacing it. The folder is deliberately a sibling of the install dir, not a child, so an upgrade can never touch it.
 
 ## Build from source
 
