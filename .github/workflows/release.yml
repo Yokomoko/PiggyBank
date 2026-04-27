@@ -39,25 +39,34 @@ jobs:
       - name: Restore
         run: dotnet restore PiggyBank.slnx
 
-      - name: Publish PiggyBank.App (self-contained, win-x64)
-        run: >
-          dotnet publish src/PiggyBank.App/PiggyBank.App.csproj
-          -c Release
-          -r win-x64
-          --self-contained
-          -o publish/PiggyBank
-
       - name: Compute version from tag
         id: ver
         shell: pwsh
         run: |
-          # ${{ github.ref_name }} is e.g. "v0.1.0"; vpk wants "0.1.0".
+          # ${{ github.ref_name }} is e.g. "v0.1.0"; both vpk and the
+          # assembly metadata want the leading "v" stripped.
           $version = "${{ github.ref_name }}".TrimStart('v')
           if ([string]::IsNullOrWhiteSpace($version)) {
             throw "Empty version after stripping leading 'v' from tag '${{ github.ref_name }}'."
           }
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           Write-Host "Version: $version"
+
+      - name: Publish PiggyBank.App (self-contained, win-x64)
+        # Inject the tag version into the assembly so Settings → About
+        # matches whatever Velopack stamped on the package. Without this,
+        # Assembly.GetName().Version reports the .csproj default (1.0.0.0)
+        # because we don't bake a Version property into the source tree.
+        # AssemblyVersion / FileVersion need a 4-part value (the .0 trailer).
+        run: >
+          dotnet publish src/PiggyBank.App/PiggyBank.App.csproj
+          -c Release
+          -r win-x64
+          --self-contained
+          -p:Version=${{ steps.ver.outputs.version }}
+          -p:AssemblyVersion=${{ steps.ver.outputs.version }}.0
+          -p:FileVersion=${{ steps.ver.outputs.version }}.0
+          -o publish/PiggyBank
 
       - name: Pack with Velopack
         shell: pwsh
