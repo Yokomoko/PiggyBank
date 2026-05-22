@@ -205,7 +205,17 @@ public sealed partial class CurrentMonthViewModel(
 
     private bool CanCloseMonth() => Month is not null && !IsClosed;
 
-    partial void OnIsClosedChanged(bool value) => CloseMonthCommand.NotifyCanExecuteChanged();
+    /// <summary>Reason text shown via <c>ToolTipService.ShowOnDisabled</c> so the
+    /// user can see why the button is greyed out instead of guessing.</summary>
+    public string CloseMonthTooltip => IsClosed
+        ? "This month is already closed — start the next one to continue."
+        : "Close the month. Locks edits and lets next month inherit the carry-over.";
+
+    partial void OnIsClosedChanged(bool value)
+    {
+        CloseMonthCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(CloseMonthTooltip));
+    }
     partial void OnCarriedOverBalanceChanged(decimal value) => Recalculate();
 
     [RelayCommand]
@@ -289,7 +299,15 @@ public sealed partial class CurrentMonthViewModel(
 
     partial void OnNewSpendPayeeChanged(string value) => AddSpendCommand.NotifyCanExecuteChanged();
     partial void OnNewSpendAmountChanged(decimal value) => AddSpendCommand.NotifyCanExecuteChanged();
-    partial void OnMonthChanged(Month? value) => AddSpendCommand.NotifyCanExecuteChanged();
+    // LoadAsync sets Month from null → loaded. CanExecute on every command
+    // that gates on `Month is not null` must be re-queried at that moment,
+    // otherwise the button stays disabled at its initial null-Month verdict.
+    partial void OnMonthChanged(Month? value)
+    {
+        AddSpendCommand.NotifyCanExecuteChanged();
+        AddOutgoingCommand.NotifyCanExecuteChanged();
+        CloseMonthCommand.NotifyCanExecuteChanged();
+    }
 
     [RelayCommand]
     public async Task DeleteSpendAsync(TransactionRow? row, CancellationToken ct = default)

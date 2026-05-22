@@ -525,14 +525,18 @@
                               Value="{Binding CarriedOverBalance, Mode=TwoWay}" />
 
                 <Border Grid.Column="8" VerticalAlignment="Center" Margin="0,0,12,0"
-                        Padding="8,4" CornerRadius="6"
+                        Padding="6,3" CornerRadius="6"
                         Background="{DynamicResource AccentFillColorSelectedTextBackgroundBrush}"
                         AutomationProperties.AutomationId="MonthClosedBanner"
                         Visibility="{Binding IsClosed, Converter={StaticResource BoolToVisibility}}">
                     <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="LockClosed24" FontSize="14" Margin="0,0,6,0" />
-                        <ui:TextBlock Text="Month closed — open next to continue."
-                                      VerticalAlignment="Center" />
+                        <ui:SymbolIcon Symbol="LockClosed24" FontSize="14" Margin="0,0,6,0" VerticalAlignment="Center" />
+                        <ui:TextBlock Text="Month closed."
+                                      VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <ui:Button Appearance="Primary"
+                                   AutomationProperties.AutomationId="StartNextMonthButton"
+                                   Content="Start next month"
+                                   Command="{Binding CreateCurrentMonthCommand}" />
                     </StackPanel>
                 </Border>
 
@@ -543,6 +547,8 @@
                 <ui:Button Grid.Column="10" Appearance="Danger"
                            AutomationProperties.AutomationId="CloseMonthButton"
                            Content="Close month"
+                           ToolTip="{Binding CloseMonthTooltip}"
+                           ToolTipService.ShowOnDisabled="True"
                            Command="{Binding CloseMonthCommand}" />
             </Grid>
         </ui:Card>
